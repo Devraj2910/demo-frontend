@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-gray-900;
+  }
+
+  * {
+    @apply box-border p-0 m-0;
+  }
+
+  html,
+  body {
+    @apply max-w-full overflow-x-hidden;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+}
+
+/* Ensure styles are applied with stronger specificity */
+.text-primary {
+  color: theme('colors.primary');
+}
+
+.text-secondary {
+  color: theme('colors.secondary');
+}
+
+.bg-primary {
+  background-color: theme('colors.primary');
+}
+
+.bg-secondary {
+  background-color: theme('colors.secondary');
+} 
