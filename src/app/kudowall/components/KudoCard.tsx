@@ -26,25 +26,25 @@ type Kudo = {
 
 // Map categories to colors for the entire card
 const categoryColors: Record<string, string> = {
-  Amazing: 'bg-yellow-100',
-  Thanks: 'bg-blue-100',
-  'Totally Awesome': 'bg-green-100',
+  Teamwork: 'bg-blue-100',
+  Innovation: 'bg-purple-100',
+  'Helping Hand': 'bg-green-100',
 };
 
 // Map categories to highlight colors (darker than the card background)
 const categoryHighlightColors: Record<string, string> = {
-  Amazing: 'bg-yellow-200',
-  Thanks: 'bg-blue-200',
-  'Totally Awesome': 'bg-green-200',
+  Teamwork: 'bg-blue-200',
+  Innovation: 'bg-purple-200',
+  'Helping Hand': 'bg-green-200',
   // Default color
   default: 'bg-gray-200',
 };
 
 // Map categories to emojis
 const categoryEmojis: Record<string, string> = {
-  Amazing: '✨',
-  Thanks: '🙏',
-  'Totally Awesome': '🌟',
+  Teamwork: '👥',
+  Innovation: '💡',
+  'Helping Hand': '🤝',
   // Default emoji for other categories
   default: '👍',
 };

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/clean-architecture/auth/AuthContext';
 import KudoCard from './components/KudoCard';
+import KudoForm from './components/KudoForm';
 
 // Mock data for kudos
 const MOCK_KUDOS = [
@@ -9,8 +11,8 @@ const MOCK_KUDOS = [
     id: '1',
     sender: 'John Doe',
     recipient: 'Grace Coleman',
-    team: 'Engineering',
-    category: 'Amazing',
+    team: 'Alpha',
+    category: 'Innovation',
     message: 'I am impressed on how much dedication you put in your work!',
     createdAt: '2023-12-01T10:30:00Z',
     senderAvatar: 'https://randomuser.me/api/portraits/men/1.jpg',
@@ -20,8 +22,8 @@ const MOCK_KUDOS = [
     id: '2',
     sender: 'Sarah Johnson',
     recipient: 'John Doe',
-    team: 'Marketing',
-    category: 'Thanks',
+    team: 'Bravo',
+    category: 'Teamwork',
     message: 'For the support you give me when I have questions.',
     createdAt: '2023-02-18T14:20:00Z',
     senderAvatar: 'https://randomuser.me/api/portraits/women/2.jpg',
@@ -31,8 +33,8 @@ const MOCK_KUDOS = [
     id: '3',
     sender: 'Emily Davis',
     recipient: 'Adele Belo',
-    team: 'Product',
-    category: 'Totally Awesome',
+    team: 'Charlie',
+    category: 'Helping Hand',
     message: 'For the migrations and fixing all the bugs!',
     createdAt: '2023-02-10T09:15:00Z',
     senderAvatar: 'https://randomuser.me/api/portraits/women/3.jpg',
@@ -42,8 +44,8 @@ const MOCK_KUDOS = [
     id: '4',
     sender: 'David Wilson',
     recipient: 'Sophie Chen',
-    team: 'Engineering',
-    category: 'Amazing',
+    team: 'Data',
+    category: 'Innovation',
     message: 'Your code quality is outstanding! Thanks for always writing clean and maintainable code.',
     createdAt: '2023-03-05T11:45:00Z',
     senderAvatar: 'https://randomuser.me/api/portraits/men/5.jpg',
@@ -53,8 +55,8 @@ const MOCK_KUDOS = [
     id: '5',
     sender: 'Michael Brown',
     recipient: 'Emma Taylor',
-    team: 'Customer Support',
-    category: 'Thanks',
+    team: 'AI',
+    category: 'Teamwork',
     message: 'You always go above and beyond to make our customers happy. Your positivity is contagious!',
     createdAt: '2023-03-12T09:30:00Z',
     senderAvatar: 'https://randomuser.me/api/portraits/men/6.jpg',
@@ -64,8 +66,8 @@ const MOCK_KUDOS = [
     id: '6',
     sender: 'Lisa Martinez',
     recipient: 'Robert Clark',
-    team: 'Marketing',
-    category: 'Totally Awesome',
+    team: 'Alpha',
+    category: 'Helping Hand',
     message: 'The last campaign was a huge success thanks to your creative ideas and dedication.',
     createdAt: '2023-03-18T16:20:00Z',
     senderAvatar: 'https://randomuser.me/api/portraits/women/7.jpg',
@@ -74,15 +76,17 @@ const MOCK_KUDOS = [
 ];
 
 // Available filter options
-const TEAMS = ['All Teams', 'Engineering', 'Marketing', 'Product', 'Customer Support'];
-const CATEGORIES = ['All Categories', 'Amazing', 'Thanks', 'Totally Awesome'];
+const TEAMS = ['All Teams', 'Alpha', 'Bravo', 'Charlie', 'Data', 'AI'];
+const CATEGORIES = ['All Categories', 'Teamwork', 'Innovation', 'Helping Hand'];
 
 export default function KudoWall() {
+  const { user, hasPermission } = useAuth();
   const [kudos, setKudos] = useState(MOCK_KUDOS);
   const [filteredKudos, setFilteredKudos] = useState(MOCK_KUDOS);
   const [searchTerm, setSearchTerm] = useState('');
   const [teamFilter, setTeamFilter] = useState('All Teams');
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
+  const [showKudoForm, setShowKudoForm] = useState(false);
 
   // For dropdown state
   const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
@@ -134,6 +138,13 @@ export default function KudoWall() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Handle adding a new kudo
+  const handleAddKudo = (newKudo: any) => {
+    const updatedKudos = [newKudo, ...kudos];
+    setKudos(updatedKudos);
+    setFilteredKudos(updatedKudos);
+  };
 
   // Function to get random position adjustment
   const getRandomPosition = (id: string) => {
@@ -304,19 +315,22 @@ export default function KudoWall() {
           </div>
         </div>
 
-        {/* Add Kudo Button */}
-        <div className='flex justify-end mb-10'>
-          <button
-            className='bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg text-sm font-medium shadow-md transition-all transform hover:scale-105 flex items-center space-x-2'
-            style={{
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-            }}
-          >
-            <span className='text-xl'>✨</span>
-            <span>Give Kudos</span>
-          </button>
-        </div>
+        {/* Add Kudo Button - Only visible to admins and tech leads */}
+        {hasPermission(['admin', 'tech_lead']) && (
+          <div className='flex justify-end mb-10'>
+            <button
+              onClick={() => setShowKudoForm(true)}
+              className='bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg text-sm font-medium shadow-md transition-all transform hover:scale-105 flex items-center space-x-2'
+              style={{
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              }}
+            >
+              <span className='text-xl'>✨</span>
+              <span>Give Kudos</span>
+            </button>
+          </div>
+        )}
 
         {/* Kudos Grid */}
         {filteredKudos.length > 0 ? (
@@ -355,6 +369,9 @@ export default function KudoWall() {
           </div>
         )}
       </div>
+
+      {/* Kudo Form Modal */}
+      {showKudoForm && <KudoForm onClose={() => setShowKudoForm(false)} onSubmit={handleAddKudo} />}
     </div>
   );
 }
