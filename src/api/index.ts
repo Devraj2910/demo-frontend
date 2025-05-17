@@ -5,6 +5,7 @@ import { User as DomainUser } from "../clean-architecture/modules/auth/domain/en
 import { MockAuthRepository } from "../clean-architecture/modules/auth/infrastructure/repositories/MockAuthRepository";
 import { LoginUseCase } from "../clean-architecture/modules/auth/application/useCases/LoginUseCase";
 import { RegisterUseCase } from "../clean-architecture/modules/auth/application/useCases/RegisterUseCase";
+import { RealAuthAPI } from "./real";
 
 // Re-export the User type from the domain layer
 export type User = DomainUser;
@@ -59,7 +60,7 @@ export class MockAuthAPI implements AuthAPI {
 }
 
 // API factory to get implementations
-// In the future, this would return real API implementations
+// Use the real API implementation to connect to the backend
 export function getAuthAPI(): AuthAPI {
-  return new MockAuthAPI();
+  return new RealAuthAPI();
 }

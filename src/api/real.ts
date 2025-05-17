@@ -5,41 +5,42 @@ import { AuthAPI, User } from "./index";
 
 // Configuration for API endpoints
 const API_CONFIG = {
-  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
+  baseUrl: "", // Empty for relative URLs
   endpoints: {
-    login: "/auth/login",
-    register: "/auth/register",
-    validateToken: "/auth/validate",
+    login: "/api/auth/login",
+    register: "/api/auth/register",
   },
 };
 
 /**
  * Real implementation of Auth API
- * Currently commented out as it will be implemented later
  */
 export class RealAuthAPI implements AuthAPI {
   async login(email: string, password: string): Promise<User> {
-    // This is a placeholder implementation
-    // Will be implemented when backend is ready
-    /*
-    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.login}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const response = await fetch(
+      `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.login}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      }
+    );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to login');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to login");
     }
 
-    return await response.json();
-    */
-
-    // For now, use the mock implementation
-    throw new Error("Not implemented yet - using mock implementation");
+    const data = await response.json();
+    return {
+      email: data.email || email,
+      firstName: data.firstName || data.name || "User",
+      lastName: data.lastName || "",
+      role: data.role || "user",
+      position: data.position || "",
+    };
   }
 
   async register(
@@ -50,52 +51,41 @@ export class RealAuthAPI implements AuthAPI {
     role: string,
     position: string
   ): Promise<User> {
-    // This is a placeholder implementation
-    // Will be implemented when backend is ready
-    /*
-    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.register}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        email, 
-        password, 
-        firstName, 
-        lastName, 
-        role, 
-        position 
-      }),
-    });
+    const response = await fetch(
+      `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.register}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          lastName,
+          role,
+          position,
+        }),
+      }
+    );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to register');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to register");
     }
 
-    return await response.json();
-    */
-
-    // For now, use the mock implementation
-    throw new Error("Not implemented yet - using mock implementation");
+    const data = await response.json();
+    return {
+      email: data.email || email,
+      firstName: data.firstName || firstName,
+      lastName: data.lastName || lastName,
+      role: data.role || role,
+      position: data.position || position,
+    };
   }
 
   async validateToken(token: string): Promise<boolean> {
-    // This is a placeholder implementation
-    // Will be implemented when backend is ready
-    /*
-    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.validateToken}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    });
-
-    return response.ok;
-    */
-
-    // For now, use the mock implementation
-    throw new Error("Not implemented yet - using mock implementation");
+    // For this demo, we'll assume the token is valid if it exists
+    return !!token;
   }
 }
