@@ -48,7 +48,6 @@ export type KudoCategory =
   | 'Excellence'
   | 'Leadership'
   | 'Problem Solving'
-  | 'Customer Focus'
   | 'Knowledge Sharing';
 
 /**

@@ -1,43 +1,12 @@
 'use client';
-
-import { useState } from 'react';
-import { Satisfy } from 'next/font/google';
-
-// Initialize the cursive font
-const cursiveFont = Satisfy({
-  weight: '400',
-  subsets: ['latin'],
-  display: 'swap',
-});
-
-// Define the Kudo type
-type Kudo = {
-  id: string;
-  sender: string;
-  recipient: string;
-  team?: string;
-  category: string;
-  message: string;
-  createdAt: string;
-  senderAvatar?: string;
-  recipientAvatar?: string;
-  extraLikes?: string[]; // Additional avatars for likes
-};
+import { Kudo } from '../../domain/entities/Kudo';
 
 // Map categories to colors for the entire card
 const categoryColors: Record<string, string> = {
   Teamwork: 'bg-blue-100',
   Innovation: 'bg-purple-100',
   'Helping Hand': 'bg-green-100',
-};
-
-// Map categories to highlight colors (darker than the card background)
-const categoryHighlightColors: Record<string, string> = {
-  Teamwork: 'bg-blue-200',
-  Innovation: 'bg-purple-200',
-  'Helping Hand': 'bg-green-200',
-  // Default color
-  default: 'bg-gray-200',
+  default: 'bg-yellow-100',
 };
 
 // Map categories to emojis
@@ -63,24 +32,31 @@ export default function KudoCard({ kudo }: { kudo: Kudo }) {
   // Format the date
   const formattedDate = formatDate(kudo.createdAt);
 
+  // Get recipient and sender names with null checks
+  const recipientName =
+    kudo.recipient?.fullName ||
+    `${kudo.recipient?.firstName || ''} ${kudo.recipient?.lastName || ''}`.trim() ||
+    'Unknown Recipient';
+
+  const senderName =
+    kudo.creator?.fullName || `${kudo.creator?.firstName || ''} ${kudo.creator?.lastName || ''}`.trim() || 'Anonymous';
+
   // Default avatars if not provided
-  const recipientAvatar =
-    kudo.recipientAvatar ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(kudo.recipient)}&background=random&color=fff`;
-  const senderAvatar =
-    kudo.senderAvatar ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(kudo.sender)}&background=random&color=fff`;
+  const recipientAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    recipientName
+  )}&background=random&color=fff`;
+  const senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=random&color=fff`;
 
   // Get the color for the category or use a default
-  const bgColor = categoryColors[kudo.category] || 'bg-yellow-100';
-  const highlightColor = categoryHighlightColors[kudo.category] || categoryHighlightColors.default;
+  const category = kudo.category || kudo.title || 'default';
+  const bgColor = categoryColors[category] || categoryColors.default;
 
   // Get the emoji for the category or use a default
-  const emoji = categoryEmojis[kudo.category] || categoryEmojis.default;
+  const emoji = categoryEmojis[category] || categoryEmojis.default;
 
   return (
     <div
-      className={`${bgColor} hover:rotate-1 rounded-lg overflow-hidden mx-auto w-full h-[400px] flex flex-col relative`}
+      className={`${bgColor} hover:rotate-1 rounded-lg overflow-hidden mx-auto w-full h-[400px] flex flex-col max-w-xs relative`}
       style={{
         boxShadow:
           '0 20px 30px -8px rgba(0, 0, 0, 0.2), 0 15px 15px -8px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05), inset 0 1px 3px rgba(255, 255, 255, 0.5)',
@@ -113,13 +89,13 @@ export default function KudoCard({ kudo }: { kudo: Kudo }) {
             className='h-20 w-20 rounded-full overflow-hidden ring-4 ring-white'
             style={{ boxShadow: '0 5px 12px rgba(0,0,0,0.25)' }}
           >
-            <img src={recipientAvatar} alt={kudo.recipient} className='h-full w-full object-cover' />
+            <img src={recipientAvatar} alt={recipientName} className='h-full w-full object-cover' />
           </div>
           <div
             className='absolute bottom-0 right-0 h-8 w-8 rounded-full overflow-hidden ring-2 ring-white'
             style={{ boxShadow: '0 3px 6px rgba(0,0,0,0.2)' }}
           >
-            <img src={senderAvatar} alt={kudo.sender} className='h-full w-full object-cover' />
+            <img src={senderAvatar} alt={senderName} className='h-full w-full object-cover' />
           </div>
         </div>
 
@@ -128,25 +104,30 @@ export default function KudoCard({ kudo }: { kudo: Kudo }) {
           className='text-xl font-bold text-gray-900 mt-2'
           style={{ textShadow: '0 1px 2px rgba(255,255,255,0.6), 0 -1px 1px rgba(0,0,0,0.05)' }}
         >
-          {kudo.recipient}
+          {recipientName}
         </h2>
 
-        {/* Category - simple text without highlight */}
+        {/* Category or Title */}
         <p className='text-sm text-gray-700 font-medium mt-1' style={{ textShadow: '0 1px 1px rgba(255,255,255,0.4)' }}>
-          {kudo.category}
+          {kudo.title || category}
         </p>
       </div>
 
       {/* Message content */}
-      <div className='p-4 flex-grow overflow-auto'>
+      <div className='p-4 flex-grow overflow-hidden'>
         <p
-          className={`text-gray-700 text-center text-lg leading-relaxed`}
+          className={`text-gray-700 text-center text-lg leading-relaxed break-all hyphens-auto overflow-wrap-anywhere whitespace-pre-wrap`}
           style={{
             textShadow: '0px 2px 3px rgba(0,0,0,0.2)',
             transform: 'rotate(-1deg)',
+            maxHeight: '130px',
+            overflowY: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: '5',
+            WebkitBoxOrient: 'vertical',
           }}
         >
-          "{kudo.message}"
+          "{kudo.content}"
         </p>
       </div>
 
@@ -154,7 +135,7 @@ export default function KudoCard({ kudo }: { kudo: Kudo }) {
       <div className='px-4 py-3 flex justify-between items-center mt-auto'>
         <div className='flex items-center space-x-2'>
           <span className='text-xs text-gray-600'>From:</span>
-          <span className='text-xs font-medium text-gray-800'>{kudo.sender}</span>
+          <span className='text-xs font-medium text-gray-800'>{senderName}</span>
         </div>
         <div className='text-xs text-gray-500'>{formattedDate}</div>
       </div>
