@@ -1,3 +1,7 @@
+/**
+ * @deprecated This file is deprecated. Use the implementation from @/modules/auth instead.
+ */
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -141,9 +145,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 // Custom hook to use the auth context
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  throw new Error('This file is deprecated. Use the implementation from @/modules/auth instead.');
 }

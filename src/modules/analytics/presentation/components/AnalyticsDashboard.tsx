@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/clean-architecture/auth/AuthContext';
+import { useAuth } from '@/modules/auth';
 import { useAnalytics } from '../hooks/useAnalytics';
 
 // Import ChartJS and required components

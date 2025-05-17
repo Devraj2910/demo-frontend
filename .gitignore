@@ -67,4 +67,6 @@ out
 
 # Vite
 .vite
-.next
+
+# Next.js
+.next/
