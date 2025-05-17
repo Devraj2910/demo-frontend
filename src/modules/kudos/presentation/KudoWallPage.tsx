@@ -343,17 +343,17 @@ export default function KudoWallPage() {
               const position = getRandomPosition(kudo.id);
 
               return (
-                <div
-                  key={kudo.id}
-                  className='hover:shadow-lg hover:scale-[1.02] hover:z-10'
-                  style={{
-                    transform: `translate(${position.x}px, ${position.y}px)`,
-                    zIndex: 1,
-                    transition: 'box-shadow 0.3s, transform 0.3s, z-index 0.3s',
-                  }}
-                >
-                  <KudoCard kudo={kudo} />
-                </div>
+                // <div
+                //   key={kudo.id}
+                //   className='hover:shadow-lg hover:scale-[1.02] hover:z-10'
+                //   style={{
+                //     transform: `translate(${position.x}px, ${position.y}px)`,
+                //     zIndex: 1,
+                //     transition: 'box-shadow 0.3s, transform 0.3s, z-index 0.3s',
+                //   }}
+                // >
+                <KudoCard kudo={kudo} />
+                //  </div>
               );
             })}
           </div>
