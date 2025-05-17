@@ -3,21 +3,25 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/clean-architecture/auth/AuthContext';
-import Link from 'next/link';
+import { useAuth } from '@/modules/auth';
+import { TRegisterData, UserRole } from '@/modules/auth';
+import TestAuth from './test-auth';
 
 export default function HomePage() {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, register } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDebug, setShowDebug] = useState(false);
 
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [team, setTeam] = useState('Alpha');
+  const [role, setRole] = useState<UserRole>('team_member');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Redirect authenticated users to kudos wall
   useEffect(() => {
@@ -34,30 +38,63 @@ export default function HomePage() {
     try {
       await login(email, password);
       router.push('/kudowall');
-    } catch (err) {
-      setError('Invalid email or password');
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
-    // For demo, just show a message
-    setTimeout(() => {
+    try {
+      const userData: TRegisterData = {
+        email,
+        password,
+        name,
+        team,
+        role,
+      };
+
+      await register(userData);
+      router.push('/kudowall');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
       setLoading(false);
-      setError('');
-      setActiveTab('login');
-      alert('Registration is disabled in this demo. Please use one of the demo accounts.');
-    }, 1000);
+    }
   };
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-indigo-50 to-white'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24'>
+        {/* Debug button */}
+        <div className='absolute top-4 right-4'>
+          <button
+            onClick={() => setShowDebug(!showDebug)}
+            className='px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm'
+          >
+            {showDebug ? 'Hide Debug' : 'Debug Tools'}
+          </button>
+        </div>
+
+        {/* Debug panel */}
+        {showDebug && (
+          <div className='mb-8'>
+            <TestAuth />
+          </div>
+        )}
+
         <div className='text-center mb-16'>
           <h1 className='text-4xl md:text-6xl font-bold text-gray-900 mb-6'>
             Digital <span className='text-indigo-600'>Kudos Wall</span>
@@ -88,15 +125,6 @@ export default function HomePage() {
                 </li>
               ))}
             </ul>
-
-            <div className='mt-12 hidden sm:block'>
-              <Link
-                href='/kudowall'
-                className='inline-flex justify-center items-center px-8 py-4 border border-indigo-600 text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 md:text-lg'
-              >
-                View Kudos Wall
-              </Link>
-            </div>
           </div>
 
           <div className='bg-white rounded-xl shadow-xl overflow-hidden'>
@@ -155,7 +183,7 @@ export default function HomePage() {
                         type='email'
                         required
                         className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='admin@company.com'
+                        placeholder='youremail@example.com'
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
@@ -169,16 +197,10 @@ export default function HomePage() {
                         type='password'
                         required
                         className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='password'
+                        placeholder='Your password'
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
-                      <div className='flex justify-between items-center mt-2'>
-                        <p className='text-xs text-gray-500'>For demo use: "password"</p>
-                        <button type='button' className='text-xs text-indigo-600 hover:text-indigo-800'>
-                          Forgot Password?
-                        </button>
-                      </div>
                     </div>
 
                     <div className='mb-3 mt-2'>
@@ -191,26 +213,6 @@ export default function HomePage() {
                       >
                         {loading ? 'Signing in...' : 'Sign in'}
                       </button>
-                    </div>
-
-                    <div className='border-t border-gray-200 my-5 pt-5'>
-                      <div className='text-sm text-center mb-4'>
-                        <div className='font-medium text-gray-600 mb-3'>Demo Accounts:</div>
-                        <div className='grid grid-cols-3 gap-3 text-xs'>
-                          <div className='bg-gray-50 p-3 rounded-md'>
-                            <div className='font-semibold'>Admin</div>
-                            <div className='text-gray-500'>admin@company.com</div>
-                          </div>
-                          <div className='bg-gray-50 p-3 rounded-md'>
-                            <div className='font-semibold'>Tech Lead</div>
-                            <div className='text-gray-500'>techlead@company.com</div>
-                          </div>
-                          <div className='bg-gray-50 p-3 rounded-md'>
-                            <div className='font-semibold'>Team Member</div>
-                            <div className='text-gray-500'>member@company.com</div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
 
                     <div className='text-center mt-auto mb-2'>
@@ -251,30 +253,41 @@ export default function HomePage() {
                         type='email'
                         required
                         className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='john@company.com'
+                        placeholder='your.email@example.com'
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
                     <div className='mb-4'>
                       <label htmlFor='reg-team' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Team
+                        Position/Team
                       </label>
-                      <select
+                      <input
                         id='reg-team'
+                        type='text'
                         required
                         className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+                        placeholder='Developer, Manager, etc.'
                         value={team}
                         onChange={(e) => setTeam(e.target.value)}
+                      />
+                    </div>
+                    <div className='mb-4'>
+                      <label htmlFor='reg-role' className='block text-sm font-medium text-gray-700 mb-1'>
+                        Role
+                      </label>
+                      <select
+                        id='reg-role'
+                        required
+                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+                        value={role}
+                        onChange={(e) => setRole(e.target.value as UserRole)}
                       >
-                        <option value='Alpha'>Alpha</option>
-                        <option value='Bravo'>Bravo</option>
-                        <option value='Charlie'>Charlie</option>
-                        <option value='Data'>Data</option>
-                        <option value='AI'>AI</option>
+                        <option value='team_member'>User</option>
+                        <option value='admin'>Admin</option>
                       </select>
                     </div>
-                    <div className='mb-6'>
+                    <div className='mb-4'>
                       <label htmlFor='reg-password' className='block text-sm font-medium text-gray-700 mb-1'>
                         Password
                       </label>
@@ -283,9 +296,23 @@ export default function HomePage() {
                         type='password'
                         required
                         className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='Must be 8+ characters'
+                        placeholder='Password'
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                    <div className='mb-6'>
+                      <label htmlFor='confirm-password' className='block text-sm font-medium text-gray-700 mb-1'>
+                        Confirm Password
+                      </label>
+                      <input
+                        id='confirm-password'
+                        type='password'
+                        required
+                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+                        placeholder='Confirm your password'
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                       />
                     </div>
 

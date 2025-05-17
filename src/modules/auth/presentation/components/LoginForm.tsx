@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/clean-architecture/auth/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
-export default function LoginPage() {
+/**
+ * Login form component
+ * Handles user authentication UI
+ */
+export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,9 +23,9 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push('/kudowall');
-    } catch (err) {
-      setError('Invalid email or password. Please try again.');
+      router.push('/kudowall'); // Redirect after successful login
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
