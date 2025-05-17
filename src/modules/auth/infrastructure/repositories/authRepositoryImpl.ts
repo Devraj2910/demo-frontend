@@ -7,6 +7,7 @@ import {
   UserRole,
   TAPIAuthResponse,
 } from '../../core/types/authTypes';
+import { Cookies } from 'react-cookie';
 
 const API_BASE_URL = 'https://demo-hackathon.onrender.com/api';
 
@@ -17,6 +18,34 @@ const API_BASE_URL = 'https://demo-hackathon.onrender.com/api';
 export class AuthRepositoryImpl implements IAuthRepository {
   private authUserKey = 'auth_user';
   private authTokenKey = 'auth_token';
+  private cookies = new Cookies();
+
+  /**
+   * Set auth token in both localStorage and cookies
+   * @param token The authentication token
+   */
+  private setAuthToken(token: string): void {
+    // Set in localStorage for client-side access
+    localStorage.setItem(this.authTokenKey, token);
+
+    // Set in cookies for middleware access (7 day expiry)
+    this.cookies.set(this.authTokenKey, token, {
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      sameSite: 'strict',
+    });
+  }
+
+  /**
+   * Remove auth token from both localStorage and cookies
+   */
+  private removeAuthToken(): void {
+    // Remove from localStorage
+    localStorage.removeItem(this.authTokenKey);
+
+    // Remove from cookies
+    this.cookies.remove(this.authTokenKey, { path: '/' });
+  }
 
   /**
    * Authenticate a user with email and password
@@ -50,13 +79,16 @@ export class AuthRepositoryImpl implements IAuthRepository {
         role: this.mapRole(data.data.role),
         team: data.data.position || 'Not specified',
       };
-      // Store user and token in localStorage
+
+      // Store user in localStorage
       localStorage.setItem(this.authUserKey, JSON.stringify(user));
-      localStorage.setItem(this.authTokenKey, data.data.token);
+
+      // Store token in both localStorage and cookies
+      this.setAuthToken(data.data.token);
 
       return {
         user,
-        token: data.token,
+        token: data.data.token,
         status: response.status,
       };
     } catch (error) {
@@ -105,9 +137,11 @@ export class AuthRepositoryImpl implements IAuthRepository {
         team: data.position || 'Not specified',
       };
 
-      // Store user and token in localStorage
+      // Store user in localStorage
       localStorage.setItem(this.authUserKey, JSON.stringify(user));
-      localStorage.setItem(this.authTokenKey, data.token);
+
+      // Store token in both localStorage and cookies
+      this.setAuthToken(data.token);
 
       return {
         user,
@@ -124,9 +158,11 @@ export class AuthRepositoryImpl implements IAuthRepository {
    * Log out the current user
    */
   async logout(): Promise<void> {
-    // Remove user and token from localStorage
+    // Remove user from localStorage
     localStorage.removeItem(this.authUserKey);
-    localStorage.removeItem(this.authTokenKey);
+
+    // Remove token from both localStorage and cookies
+    this.removeAuthToken();
   }
 
   /**
@@ -148,7 +184,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         localStorage.removeItem(this.authUserKey);
-        localStorage.removeItem(this.authTokenKey);
+        this.removeAuthToken();
       }
     }
 

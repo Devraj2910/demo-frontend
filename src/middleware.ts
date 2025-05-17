@@ -1,26 +1,30 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Since our authentication is client-side using localStorage,
-// this middleware provides basic route protection based on path
+// Middleware for handling authentication and route protection
 export function middleware(request: NextRequest) {
   // Get the path from the request
   const path = request.nextUrl.pathname;
 
+  // Define protected routes that require authentication
+  const protectedRoutes = ['/kudowall', '/analytics', '/admin', '/reports', '/profile'];
+
   // Define public routes that don't require authentication
-  const isPublicRoute = path === '/';
+  const publicRoutes = ['/', '/login', '/register'];
 
-  // For client-side authentication, we'll let most of the auth checking happen in components
-  // This middleware just provides a basic layer of route protection
+  // Check if the current path is a protected route
+  const isProtectedRoute = protectedRoutes.some((route) => path === route || path.startsWith(`${route}/`));
 
-  // If it's not a public route, we will still allow access and let client-side
-  // code redirect if not authenticated (since we can't directly access localStorage in middleware)
-  if (!isPublicRoute) {
-    // Allow the request but client-side code will handle redirection
-    return NextResponse.next();
+  // Get auth token from cookies (cookies are accessible in middleware)
+  const authToken = request.cookies.get('auth_token')?.value;
+
+  // If it's a protected route and there's no token, redirect to home page
+  if (isProtectedRoute && !authToken) {
+    console.log(`Unauthorized access attempt to ${path}, redirecting to home`);
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Always allow public routes
+  // Allow the request
   return NextResponse.next();
 }
 
@@ -28,6 +32,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Routes that will trigger this middleware
+    // Exclude static files, API routes, images, etc.
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)',
   ],
 };

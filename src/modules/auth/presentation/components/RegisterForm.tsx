@@ -1,195 +1,238 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../context/AuthContext';
-import { TRegisterData, UserRole } from '../../core/types/authTypes';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { UserRole } from '../../core/types/authTypes';
+
+interface RegisterFormProps {
+  loading: boolean;
+  error: string;
+  onSubmit: (data: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    team: string;
+    role: UserRole;
+  }) => void;
+  onSwitchToLogin: () => void;
+}
+
+type RegisterFormValues = {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  team: string;
+  role: UserRole;
+};
 
 /**
  * Register form component
- * Handles user registration UI
+ * Using React Hook Form
  */
-export default function RegisterForm() {
-  const [formData, setFormData] = useState<TRegisterData>({
-    email: '',
-    password: '',
-    name: '',
-    role: 'team_member',
-    team: '',
+export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: RegisterFormProps) {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      team: 'Alpha',
+      role: 'team_member' as UserRole,
+    },
   });
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const { register } = useAuth();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    // Validate passwords match
-    if (formData.password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      await register(formData);
-      router.push('/kudowall'); // Redirect after successful registration
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Watch the password field to use for validation
+  const password = watch('password');
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8'>
-      <div className='max-w-md w-full space-y-8'>
-        <div className='text-center'>
-          <h2 className='mt-6 text-3xl font-extrabold text-gray-900'>Create your account</h2>
-          <p className='mt-2 text-sm text-gray-600'>Register to join the Digital Kudos Wall</p>
+    <form onSubmit={handleSubmit(onSubmit)} className='h-full flex flex-col'>
+      {error && (
+        <div className='bg-red-50 border-l-4 border-auth-error p-4 mb-6 rounded-r'>
+          <div className='flex'>
+            <div className='flex-shrink-0'>
+              <svg className='h-5 w-5 text-auth-error' viewBox='0 0 20 20' fill='currentColor'>
+                <path
+                  fillRule='evenodd'
+                  d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
+                  clipRule='evenodd'
+                />
+              </svg>
+            </div>
+            <div className='ml-3'>
+              <p className='text-sm text-red-700'>{error}</p>
+            </div>
+          </div>
         </div>
+      )}
 
-        <div className='mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10'>
-          <form className='space-y-6' onSubmit={handleSubmit}>
-            {error && (
-              <div className='rounded-md bg-red-50 p-4'>
-                <div className='flex'>
-                  <div className='flex-shrink-0'>
-                    <svg className='h-5 w-5 text-red-400' viewBox='0 0 20 20' fill='currentColor' aria-hidden='true'>
-                      <path
-                        fillRule='evenodd'
-                        d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z'
-                        clipRule='evenodd'
-                      />
-                    </svg>
-                  </div>
-                  <div className='ml-3'>
-                    <h3 className='text-sm font-medium text-red-800'>{error}</h3>
-                  </div>
-                </div>
-              </div>
-            )}
+      <div className='mb-4'>
+        <label htmlFor='name' className='block text-sm font-medium text-gray-700 mb-1'>
+          Full Name
+        </label>
+        <input
+          id='name'
+          type='text'
+          className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
+            errors.name ? 'border-auth-error' : 'border-auth-border'
+          }`}
+          placeholder='John Doe'
+          {...register('name', { required: 'Full name is required' })}
+        />
+        {errors.name && <p className='mt-1 text-sm text-auth-error'>{errors.name.message}</p>}
+      </div>
 
-            <div>
-              <label htmlFor='name' className='block text-sm font-medium text-gray-700'>
-                Full Name
-              </label>
-              <div className='mt-1'>
-                <input
-                  id='name'
-                  name='name'
-                  type='text'
-                  autoComplete='name'
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className='appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
-                  placeholder='John Doe'
-                />
-              </div>
-            </div>
+      <div className='mb-4'>
+        <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-1'>
+          Email
+        </label>
+        <input
+          id='email'
+          type='email'
+          className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
+            errors.email ? 'border-auth-error' : 'border-auth-border'
+          }`}
+          placeholder='your.email@example.com'
+          {...register('email', {
+            required: 'Email is required',
+            pattern: {
+              value: /\S+@\S+\.\S+/,
+              message: 'Please enter a valid email',
+            },
+          })}
+        />
+        {errors.email && <p className='mt-1 text-sm text-auth-error'>{errors.email.message}</p>}
+      </div>
 
-            <div>
-              <label htmlFor='email' className='block text-sm font-medium text-gray-700'>
-                Email
-              </label>
-              <div className='mt-1'>
-                <input
-                  id='email'
-                  name='email'
-                  type='email'
-                  autoComplete='email'
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className='appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
-                  placeholder='your-email@example.com'
-                />
-              </div>
-            </div>
+      <div className='mb-4'>
+        <label htmlFor='team' className='block text-sm font-medium text-gray-700 mb-1'>
+          Team
+        </label>
+        <input
+          id='team'
+          type='text'
+          className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
+            errors.team ? 'border-auth-error' : 'border-auth-border'
+          }`}
+          placeholder='Developer, Manager, etc.'
+          {...register('team', { required: 'Team is required' })}
+        />
+        {errors.team && <p className='mt-1 text-sm text-auth-error'>{errors.team.message}</p>}
+      </div>
 
-            <div>
-              <label htmlFor='password' className='block text-sm font-medium text-gray-700'>
-                Password
-              </label>
-              <div className='mt-1'>
-                <input
-                  id='password'
-                  name='password'
-                  type='password'
-                  autoComplete='new-password'
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className='appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
-                  placeholder='********'
-                />
-              </div>
-              <p className='mt-1 text-xs text-gray-500'>Password must be at least 6 characters</p>
-            </div>
+      <div className='mb-4'>
+        <label htmlFor='role' className='block text-sm font-medium text-gray-700 mb-1'>
+          Role
+        </label>
+        <select
+          id='role'
+          className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
+            errors.role ? 'border-auth-error' : 'border-auth-border'
+          }`}
+          {...register('role', { required: 'Role is required' })}
+        >
+          <option value='team_member'>User</option>
+          <option value='admin'>Admin</option>
+        </select>
+        {errors.role && <p className='mt-1 text-sm text-auth-error'>{errors.role.message}</p>}
+      </div>
 
-            <div>
-              <label htmlFor='confirmPassword' className='block text-sm font-medium text-gray-700'>
-                Confirm Password
-              </label>
-              <div className='mt-1'>
-                <input
-                  id='confirmPassword'
-                  name='confirmPassword'
-                  type='password'
-                  autoComplete='new-password'
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className='appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
-                  placeholder='********'
-                />
-              </div>
-            </div>
+      <div className='mb-4'>
+        <label htmlFor='password' className='block text-sm font-medium text-gray-700 mb-1'>
+          Password
+        </label>
+        <input
+          id='password'
+          type='password'
+          className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
+            errors.password ? 'border-auth-error' : 'border-auth-border'
+          }`}
+          placeholder='Password'
+          {...register('password', {
+            required: 'Password is required',
+            minLength: {
+              value: 6,
+              message: 'Password must be at least 6 characters',
+            },
+          })}
+        />
+        {errors.password && <p className='mt-1 text-sm text-auth-error'>{errors.password.message}</p>}
+      </div>
 
-            <div>
-              <label htmlFor='team' className='block text-sm font-medium text-gray-700'>
-                Team (Optional)
-              </label>
-              <div className='mt-1'>
-                <input
-                  id='team'
-                  name='team'
-                  type='text'
-                  value={formData.team}
-                  onChange={handleChange}
-                  className='appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
-                  placeholder='Your team name'
-                />
-              </div>
-            </div>
+      <div className='mb-6'>
+        <label htmlFor='confirmPassword' className='block text-sm font-medium text-gray-700 mb-1'>
+          Confirm Password
+        </label>
+        <input
+          id='confirmPassword'
+          type='password'
+          className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
+            errors.confirmPassword ? 'border-auth-error' : 'border-auth-border'
+          }`}
+          placeholder='Confirm your password'
+          {...register('confirmPassword', {
+            required: 'Please confirm your password',
+            validate: (value: string) => value === password || 'Passwords do not match',
+          })}
+        />
+        {errors.confirmPassword && <p className='mt-1 text-sm text-auth-error'>{errors.confirmPassword.message}</p>}
+      </div>
 
-            <div>
-              <button
-                type='submit'
-                disabled={isLoading}
-                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                  isLoading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+      <div className='mb-6'>
+        <button
+          type='submit'
+          disabled={loading}
+          className={`w-full py-3 px-4 border border-transparent rounded-auth-button shadow-md text-sm font-medium text-white transition-colors ${
+            loading ? 'bg-auth-secondary' : 'bg-auth-primary hover:bg-auth-highlight'
+          } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-auth-primary`}
+        >
+          {loading ? (
+            <span className='flex items-center justify-center'>
+              <svg
+                className='animate-auth-spin -ml-1 mr-2 h-4 w-4 text-white'
+                xmlns='http://www.w3.org/2000/svg'
+                fill='none'
+                viewBox='0 0 24 24'
               >
-                {isLoading ? 'Creating account...' : 'Create account'}
-              </button>
-            </div>
-          </form>
+                <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                <path
+                  className='opacity-75'
+                  fill='currentColor'
+                  d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                ></path>
+              </svg>
+              Registering...
+            </span>
+          ) : (
+            'Create Account'
+          )}
+        </button>
+      </div>
+
+      <div className='mt-auto'>
+        <p className='text-xs text-gray-500 text-center mb-4'>
+          By registering, you agree to our terms of service and privacy policy.
+        </p>
+
+        <div className='text-center'>
+          <p className='text-sm text-gray-600'>
+            Already have an account?
+            <button
+              type='button'
+              className='ml-1 text-auth-primary hover:text-auth-highlight font-medium transition-colors'
+              onClick={onSwitchToLogin}
+            >
+              Sign in
+            </button>
+          </p>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

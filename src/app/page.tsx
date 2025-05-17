@@ -1,25 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/modules/auth';
 import { TRegisterData, UserRole } from '@/modules/auth';
+import LoginForm from '@/modules/auth/presentation/components/LoginForm';
+import RegisterForm from '@/modules/auth/presentation/components/RegisterForm';
 
 export default function HomePage() {
-  const { isAuthenticated, login, register } = useAuth();
+  const { isAuthenticated, login, register: registerUser } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Form states
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [team, setTeam] = useState('Alpha');
-  const [role, setRole] = useState<UserRole>('team_member');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Redirect authenticated users to kudos wall
   useEffect(() => {
@@ -28,13 +21,12 @@ export default function HomePage() {
     }
   }, [isAuthenticated, router]);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleLogin = async (data: { email: string; password: string }) => {
     setError('');
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(data.email, data.password);
       router.push('/kudowall');
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
@@ -43,28 +35,29 @@ export default function HomePage() {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleRegister = async (data: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    team: string;
+    role: UserRole;
+  }) => {
     setError('');
 
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
+    // The password validation is now handled by the form component
     setLoading(true);
 
     try {
       const userData: TRegisterData = {
-        email,
-        password,
-        name,
-        team,
-        role,
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        team: data.team,
+        role: data.role,
       };
 
-      await register(userData);
+      await registerUser(userData);
       router.push('/kudowall');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -73,12 +66,16 @@ export default function HomePage() {
     }
   };
 
+  // Switch between login and register forms
+  const switchToLogin = () => setActiveTab('login');
+  const switchToRegister = () => setActiveTab('register');
+
   return (
     <div className='min-h-screen bg-gradient-to-b from-indigo-50 to-white'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24'>
         <div className='text-center mb-16'>
           <h1 className='text-4xl md:text-6xl font-bold text-gray-900 mb-6'>
-            Digital <span className='text-indigo-600'>Kudos Wall</span>
+            Digital <span className='text-auth-primary'>Kudos Wall</span>
           </h1>
           <p className='text-xl text-gray-600 max-w-3xl mx-auto'>
             Celebrate achievements and foster a culture of appreciation by recognizing your colleagues' contributions
@@ -97,7 +94,7 @@ export default function HomePage() {
                 'Boost morale and motivation',
               ].map((item, index) => (
                 <li key={index} className='flex items-start'>
-                  <div className='flex-shrink-0 h-6 w-6 text-indigo-600'>
+                  <div className='flex-shrink-0 h-6 w-6 text-auth-primary'>
                     <svg fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
                     </svg>
@@ -108,226 +105,46 @@ export default function HomePage() {
             </ul>
           </div>
 
-          <div className='bg-white rounded-xl shadow-xl overflow-hidden'>
-            <div className='flex border-b border-gray-200'>
+          <div className='min-h-[420px]'>
+            <div className='flex border-b border-auth-border'>
               <button
-                className={`flex-1 py-4 px-6 text-center font-medium ${
+                className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
                   activeTab === 'login'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600'
+                    ? 'text-auth-primary border-b-2 border-auth-primary'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                onClick={() => setActiveTab('login')}
+                onClick={switchToLogin}
               >
                 Sign In
               </button>
               <button
-                className={`flex-1 py-4 px-6 text-center font-medium ${
+                className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
                   activeTab === 'register'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600'
+                    ? 'text-auth-primary border-b-2 border-auth-primary'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                onClick={() => setActiveTab('register')}
+                onClick={switchToRegister}
               >
                 Register
               </button>
             </div>
 
             <div className='p-6'>
-              {error && (
-                <div className='bg-red-50 border-l-4 border-red-400 p-4 mb-6'>
-                  <div className='flex'>
-                    <div className='flex-shrink-0'>
-                      <svg className='h-5 w-5 text-red-400' viewBox='0 0 20 20' fill='currentColor'>
-                        <path
-                          fillRule='evenodd'
-                          d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
-                          clipRule='evenodd'
-                        />
-                      </svg>
-                    </div>
-                    <div className='ml-3'>
-                      <p className='text-sm text-red-700'>{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className='min-h-[420px]'>
+              <div className='bg-white rounded-xl shadow-auth-card overflow-hidden p-6'>
                 {activeTab === 'login' ? (
-                  <form onSubmit={handleLogin} className='h-full flex flex-col'>
-                    <div className='mb-5'>
-                      <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Email
-                      </label>
-                      <input
-                        id='email'
-                        type='email'
-                        required
-                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='youremail@example.com'
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </div>
-                    <div className='mb-5'>
-                      <label htmlFor='password' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Password
-                      </label>
-                      <input
-                        id='password'
-                        type='password'
-                        required
-                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='Your password'
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                    </div>
-
-                    <div className='mb-3 mt-2'>
-                      <button
-                        type='submit'
-                        disabled={loading}
-                        className={`w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                          loading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
-                        } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
-                      >
-                        {loading ? 'Signing in...' : 'Sign in'}
-                      </button>
-                    </div>
-
-                    <div className='text-center mt-auto mb-2'>
-                      <p className='text-sm text-gray-600'>
-                        Need an account?
-                        <button
-                          type='button'
-                          className='ml-1 text-indigo-600 hover:text-indigo-800'
-                          onClick={() => setActiveTab('register')}
-                        >
-                          Register here
-                        </button>
-                      </p>
-                    </div>
-                  </form>
+                  <LoginForm
+                    loading={loading}
+                    error={error}
+                    onSubmit={handleLogin}
+                    onSwitchToRegister={switchToRegister}
+                  />
                 ) : (
-                  <form onSubmit={handleRegister} className='h-full flex flex-col'>
-                    <div className='mb-4'>
-                      <label htmlFor='reg-name' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Full Name
-                      </label>
-                      <input
-                        id='reg-name'
-                        type='text'
-                        required
-                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='John Doe'
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                      />
-                    </div>
-                    <div className='mb-4'>
-                      <label htmlFor='reg-email' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Email
-                      </label>
-                      <input
-                        id='reg-email'
-                        type='email'
-                        required
-                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='your.email@example.com'
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </div>
-                    <div className='mb-4'>
-                      <label htmlFor='reg-team' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Position/Team
-                      </label>
-                      <input
-                        id='reg-team'
-                        type='text'
-                        required
-                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='Developer, Manager, etc.'
-                        value={team}
-                        onChange={(e) => setTeam(e.target.value)}
-                      />
-                    </div>
-                    <div className='mb-4'>
-                      <label htmlFor='reg-role' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Role
-                      </label>
-                      <select
-                        id='reg-role'
-                        required
-                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        value={role}
-                        onChange={(e) => setRole(e.target.value as UserRole)}
-                      >
-                        <option value='team_member'>User</option>
-                        <option value='admin'>Admin</option>
-                      </select>
-                    </div>
-                    <div className='mb-4'>
-                      <label htmlFor='reg-password' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Password
-                      </label>
-                      <input
-                        id='reg-password'
-                        type='password'
-                        required
-                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='Password'
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                    </div>
-                    <div className='mb-6'>
-                      <label htmlFor='confirm-password' className='block text-sm font-medium text-gray-700 mb-1'>
-                        Confirm Password
-                      </label>
-                      <input
-                        id='confirm-password'
-                        type='password'
-                        required
-                        className='w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        placeholder='Confirm your password'
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                      />
-                    </div>
-
-                    <div className='mb-6'>
-                      <button
-                        type='submit'
-                        disabled={loading}
-                        className={`w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                          loading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
-                        } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
-                      >
-                        {loading ? 'Registering...' : 'Create Account'}
-                      </button>
-                    </div>
-
-                    <div className='mt-auto'>
-                      <p className='text-xs text-gray-500 text-center mb-4'>
-                        By registering, you agree to our terms of service and privacy policy.
-                      </p>
-
-                      <div className='text-center'>
-                        <p className='text-sm text-gray-600'>
-                          Already have an account?
-                          <button
-                            type='button'
-                            className='ml-1 text-indigo-600 hover:text-indigo-800'
-                            onClick={() => setActiveTab('login')}
-                          >
-                            Sign in
-                          </button>
-                        </p>
-                      </div>
-                    </div>
-                  </form>
+                  <RegisterForm
+                    loading={loading}
+                    error={error}
+                    onSubmit={handleRegister}
+                    onSwitchToLogin={switchToLogin}
+                  />
                 )}
               </div>
             </div>
@@ -342,7 +159,7 @@ export default function HomePage() {
                 title: 'Choose a recipient',
                 description: 'Select a teammate you want to recognize for their work or support',
                 icon: (
-                  <svg className='h-8 w-8 text-indigo-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                  <svg className='h-8 w-8 text-auth-primary' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
                       strokeLinecap='round'
                       strokeLinejoin='round'
@@ -356,7 +173,7 @@ export default function HomePage() {
                 title: 'Write your kudos',
                 description: 'Share what they did and how it made a positive impact',
                 icon: (
-                  <svg className='h-8 w-8 text-indigo-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                  <svg className='h-8 w-8 text-auth-primary' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
                       strokeLinecap='round'
                       strokeLinejoin='round'
@@ -370,7 +187,7 @@ export default function HomePage() {
                 title: 'Share publicly',
                 description: 'Your recognition will be displayed on the kudos wall for everyone to see',
                 icon: (
-                  <svg className='h-8 w-8 text-indigo-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                  <svg className='h-8 w-8 text-auth-primary' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
                       strokeLinecap='round'
                       strokeLinejoin='round'
