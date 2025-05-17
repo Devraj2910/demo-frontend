@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/modules/auth';
 import { TRegisterData, UserRole } from '@/modules/auth';
-import TestAuth from './test-auth';
 
 export default function HomePage() {
   const { isAuthenticated, login, register } = useAuth();
@@ -13,7 +12,6 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showDebug, setShowDebug] = useState(false);
 
   // Form states
   const [email, setEmail] = useState('');
@@ -78,23 +76,6 @@ export default function HomePage() {
   return (
     <div className='min-h-screen bg-gradient-to-b from-indigo-50 to-white'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24'>
-        {/* Debug button */}
-        <div className='absolute top-4 right-4'>
-          <button
-            onClick={() => setShowDebug(!showDebug)}
-            className='px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm'
-          >
-            {showDebug ? 'Hide Debug' : 'Debug Tools'}
-          </button>
-        </div>
-
-        {/* Debug panel */}
-        {showDebug && (
-          <div className='mb-8'>
-            <TestAuth />
-          </div>
-        )}
-
         <div className='text-center mb-16'>
           <h1 className='text-4xl md:text-6xl font-bold text-gray-900 mb-6'>
             Digital <span className='text-indigo-600'>Kudos Wall</span>

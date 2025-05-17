@@ -38,10 +38,9 @@ export class LoginUseCase {
     try {
       // Call the service to perform the login
       const user = await this.authService.login(credentials);
-      console.log('LoginUseCase: Login successful, user:', user);
+
       return user;
     } catch (error) {
-      console.error('LoginUseCase: Login failed', error);
       throw error;
     }
   }

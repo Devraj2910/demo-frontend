@@ -75,17 +75,7 @@ export default function NavigationBar() {
                 )}
               </div>
             ) : (
-              <div className='flex items-center space-x-4'>
-                <Link href='/' className='text-indigo-600 hover:text-indigo-800 text-sm font-medium'>
-                  Sign in
-                </Link>
-                <Link
-                  href='/'
-                  className='bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium'
-                >
-                  Register
-                </Link>
-              </div>
+              <></>
             )}
           </div>
         </div>

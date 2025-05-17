@@ -41,21 +41,18 @@ export class AuthRepositoryImpl implements IAuthRepository {
         throw new Error(errorData.message || 'Invalid email or password');
       }
 
-      const data = (await response.json()) as TAPIAuthResponse;
-      console.log('Login API response:', data);
-
+      const data = await response.json();
       // Map API response to our TUser type
       const user: TUser = {
-        id: data.id,
-        name: data.firstName || '', // Use first part of email as name if firstName not available
-        email: data.email,
-        role: this.mapRole(data.role),
-        team: data.position || 'Not specified',
+        id: data.data.id,
+        name: data.data.firstName || '', // Use first part of email as name if firstName not available
+        email: data.data.email,
+        role: this.mapRole(data.data.role),
+        team: data.data.position || 'Not specified',
       };
-
       // Store user and token in localStorage
       localStorage.setItem(this.authUserKey, JSON.stringify(user));
-      localStorage.setItem(this.authTokenKey, data.token);
+      localStorage.setItem(this.authTokenKey, data.data.token);
 
       return {
         user,
@@ -96,8 +93,6 @@ export class AuthRepositoryImpl implements IAuthRepository {
       }
 
       const responseJson = await response.json();
-      console.log('Register API response:', responseJson);
-
       // The response may be wrapped in a data property or directly contain the user data
       const data = responseJson.data || (responseJson as TAPIAuthResponse);
 

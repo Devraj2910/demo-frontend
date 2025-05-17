@@ -118,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await authService.logout();
+      window.location.href = '/';
       setUser(null);
       setToken(null);
     } catch (error) {
