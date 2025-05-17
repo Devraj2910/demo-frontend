@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/clean-architecture/auth/AuthContext';
+import { useAuth } from '@/modules/auth/presentation/context/AuthContext';
 import KudoCard from './components/KudoCard';
 import KudoForm from './components/KudoForm';
 import { Kudo } from '../domain/entities/Kudo';
@@ -298,7 +298,7 @@ export default function KudoWallPage() {
         </div>
 
         {/* Add Kudo Button - Only visible to admins and tech leads */}
-        {hasPermission(['admin', 'tech_lead']) && (
+        {hasPermission(['admin']) && (
           <div className='flex justify-end mb-10'>
             <button
               onClick={() => setShowKudoForm(true)}

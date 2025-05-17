@@ -3,8 +3,6 @@ import { Kudo, User } from '../domain/entities/Kudo';
 export class KudosApiClient {
   private static instance: KudosApiClient;
   private baseUrl: string = 'https://demo-hackathon.onrender.com/api';
-  private authToken: string =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwOGNkNjQ1Ni01MDJmLTRiOGYtODliMy1iNGM2ODQzMjYzZDQiLCJlbWFpbCI6ImRldnJhai5yYWpwdXRAYXZlc3RhdGVjaG5vbG9naWVzLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc0NzQ5ODQ5OSwiZXhwIjoxNzQ3NTAyMDk5fQ.VAKGODM8nYra6xQGr46UIaNP2cPqJokYGVJ3vVeFSqw';
 
   private constructor() {}
 
@@ -15,12 +13,26 @@ export class KudosApiClient {
     return KudosApiClient.instance;
   }
 
+  // Get the auth token from localStorage
+  private getAuthToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('auth_token');
+    }
+    return null;
+  }
+
   // Common headers for all requests
   private getHeaders(): HeadersInit {
-    return {
+    const token = this.getAuthToken();
+    const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.authToken}`,
     };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
   }
 
   // Fetch all kudos

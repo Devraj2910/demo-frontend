@@ -87,7 +87,7 @@ export class MockUserRepository implements UserRepository {
       name: 'David Wilson',
       team: 'Data',
       avatar: 'https://randomuser.me/api/portraits/men/5.jpg',
-      role: 'tech_lead',
+      role: 'admin',
     },
     {
       id: '11',
@@ -104,7 +104,7 @@ export class MockUserRepository implements UserRepository {
       name: 'Michael Brown',
       team: 'AI',
       avatar: 'https://randomuser.me/api/portraits/men/6.jpg',
-      role: 'tech_lead',
+      role: 'admin',
     },
     {
       id: '13',
@@ -124,7 +124,7 @@ export class MockUserRepository implements UserRepository {
     name: 'David Wilson',
     team: 'Data',
     avatar: 'https://randomuser.me/api/portraits/men/5.jpg',
-    role: 'tech_lead',
+    role: 'admin',
   };
 
   /**

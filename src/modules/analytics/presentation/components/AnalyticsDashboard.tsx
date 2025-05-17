@@ -53,7 +53,7 @@ export default function AnalyticsDashboard() {
   React.useEffect(() => {
     if (!isAuthenticated) {
       router.push('/');
-    } else if (!hasPermission(['admin', 'tech_lead'])) {
+    } else if (!hasPermission(['admin'])) {
       router.push('/kudowall');
     }
   }, [isAuthenticated, hasPermission, router]);
