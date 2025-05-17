@@ -1,5 +1,14 @@
-import { TimePeriod } from '../../domain/entities/AnalyticsData';
+import { TimePeriod, AnalyticsDashboardData, AnalyticsSummary } from '../../domain/entities/AnalyticsData';
 import { AnalyticsService } from '../services/AnalyticsService';
+
+interface GetDashboardStatsResult {
+  success: boolean;
+  data?: {
+    dashboardData: AnalyticsDashboardData;
+    summary: AnalyticsSummary;
+  };
+  error?: string;
+}
 
 /**
  * Get Dashboard Stats Use Case
@@ -13,18 +22,21 @@ export class GetDashboardStats {
    * @param period The time period to get stats for
    * @returns All dashboard statistics
    */
-  async execute(period: TimePeriod) {
+  async execute(period: TimePeriod): Promise<GetDashboardStatsResult> {
     try {
-      const data = await this.analyticsService.getDashboardData(period);
+      const result = await this.analyticsService.getDashboardData(period);
+
       return {
         success: true,
-        data,
+        data: result,
       };
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load analytics data';
+
       return {
         success: false,
-        error: 'Failed to load analytics data',
+        error: errorMessage,
       };
     }
   }

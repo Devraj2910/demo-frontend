@@ -1,8 +1,32 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { TimePeriod } from '../../domain/entities/AnalyticsData';
+import { TimePeriod, AnalyticsDashboardData, AnalyticsSummary } from '../../domain/entities/AnalyticsData';
 import { GetDashboardStats } from '../../application/usecases/GetDashboardStats';
 import { AnalyticsService } from '../../application/services/AnalyticsService';
 import { analyticsApi } from '../../infrastructure/api/analyticsApi';
+import { useAuth } from '@/modules/auth';
+import { useRouter } from 'next/navigation';
+
+// Chart.js types
+interface ChartData {
+  labels: string[];
+  datasets: Array<{
+    label: string;
+    data: number[];
+    backgroundColor?: string | string[];
+    borderColor?: string | string[];
+    borderWidth?: number;
+    tension?: number;
+    fill?: boolean;
+  }>;
+}
+
+interface ChartsData {
+  monthlyTrendChart: ChartData;
+  teamAnalyticsChart: ChartData;
+  titleAnalyticsChart: ChartData;
+}
 
 /**
  * Custom hook for accessing analytics data
@@ -12,12 +36,25 @@ export function useAnalytics() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('Last Month');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<AnalyticsDashboardData | null>(null);
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+
+  const { hasPermission, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   // Initialize dependencies
   const repository = analyticsApi.getRepository();
   const analyticsService = new AnalyticsService(repository);
   const getDashboardStats = new GetDashboardStats(analyticsService);
+
+  // Check authentication and permissions
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/');
+    } else if (!hasPermission(['admin'])) {
+      router.push('/kudowall');
+    }
+  }, [isAuthenticated, hasPermission, router]);
 
   // Fetch analytics data when time period changes
   useEffect(() => {
@@ -28,8 +65,9 @@ export function useAnalytics() {
       try {
         const result = await getDashboardStats.execute(timePeriod);
 
-        if (result.success) {
-          setData(result.data);
+        if (result.success && result.data) {
+          setDashboardData(result.data.dashboardData);
+          setSummary(result.data.summary);
         } else {
           setError(result.error || 'An error occurred while fetching data');
         }
@@ -45,24 +83,24 @@ export function useAnalytics() {
   }, [timePeriod]);
 
   // Format data for chart.js
-  const formatChartData = () => {
-    if (!data) return null;
+  const formatChartData = (): ChartsData | null => {
+    if (!dashboardData) return null;
 
-    // Format trend data for line chart
-    const trendChartData = {
-      labels: data.trendData.map((item: any) => item.period),
+    // Format monthly analytics data for line chart
+    const monthlyTrendChart: ChartData = {
+      labels: dashboardData.monthlyAnalytics.map((item) => item.month),
       datasets: [
         {
-          label: 'Kudos Sent',
-          data: data.trendData.map((item: any) => item.kudosSent),
+          label: 'Active Users',
+          data: dashboardData.monthlyAnalytics.map((item) => item.activeUsers),
           borderColor: 'rgba(99, 102, 241, 1)',
           backgroundColor: 'rgba(99, 102, 241, 0.1)',
           tension: 0.4,
           fill: true,
         },
         {
-          label: 'New Users',
-          data: data.trendData.map((item: any) => item.newUsers),
+          label: 'Cards Created',
+          data: dashboardData.monthlyAnalytics.map((item) => item.cardsCreated),
           borderColor: 'rgba(244, 63, 94, 1)',
           backgroundColor: 'rgba(244, 63, 94, 0.1)',
           tension: 0.4,
@@ -71,59 +109,49 @@ export function useAnalytics() {
       ],
     };
 
-    // Format weekly activity data for bar chart
-    const activityChartData = {
-      labels: data.weeklyActivity.map((item: any) => item.day),
+    // Format team analytics data for bar chart
+    const teamAnalyticsChart: ChartData = {
+      labels: dashboardData.teamAnalytics.map((item) => item.name),
       datasets: [
         {
-          label: 'Kudos Activity',
-          data: data.weeklyActivity.map((item: any) => item.count),
+          label: 'Cards Count',
+          data: dashboardData.teamAnalytics.map((item) => item.cardCount),
           backgroundColor: [
             'rgba(99, 102, 241, 0.8)',
             'rgba(79, 70, 229, 0.8)',
             'rgba(67, 56, 202, 0.8)',
             'rgba(55, 48, 163, 0.8)',
             'rgba(49, 46, 129, 0.8)',
-            'rgba(30, 58, 138, 0.8)',
-            'rgba(30, 64, 175, 0.8)',
           ],
           borderWidth: 1,
         },
       ],
     };
 
-    // Format team data for bar chart
-    const teamChartData = {
-      labels: data.teamData.map((item: any) => item.team),
+    // Format title analytics data for donut chart
+    const titleAnalyticsChart: ChartData = {
+      labels: dashboardData.titleAnalytics.map((item) => item.title),
       datasets: [
         {
-          label: 'Kudos Received',
-          data: data.teamData.map((item: any) => item.count),
-          backgroundColor: 'rgba(99, 102, 241, 0.8)',
-          borderColor: 'rgba(99, 102, 241, 1)',
+          label: 'Kudos Count',
+          data: dashboardData.titleAnalytics.map((item) => item.count),
+          backgroundColor: [
+            'rgba(99, 102, 241, 0.8)',
+            'rgba(244, 63, 94, 0.8)',
+            'rgba(34, 197, 94, 0.8)',
+            'rgba(168, 85, 247, 0.8)',
+            'rgba(249, 115, 22, 0.8)',
+            'rgba(20, 184, 166, 0.8)',
+          ],
           borderWidth: 1,
         },
       ],
     };
 
-    // Format category data for donut chart
-    const categoryChartData = {
-      labels: data.categoryData.map((item: any) => item.category),
-      datasets: [
-        {
-          data: data.categoryData.map((item: any) => item.count),
-          backgroundColor: data.categoryData.map((item: any) => item.color),
-          borderColor: 'rgba(255, 255, 255, 0.5)',
-          borderWidth: 2,
-        },
-      ],
-    };
-
     return {
-      trendChartData,
-      activityChartData,
-      teamChartData,
-      categoryChartData,
+      monthlyTrendChart,
+      teamAnalyticsChart,
+      titleAnalyticsChart,
     };
   };
 
@@ -137,7 +165,7 @@ export function useAnalytics() {
         },
         title: {
           display: true,
-          text: 'Monthly Kudos Trend',
+          text: 'Monthly Activity',
         },
       },
       animation: {
@@ -157,7 +185,7 @@ export function useAnalytics() {
         },
         title: {
           display: true,
-          text: 'Weekly Activity',
+          text: 'Team Analytics',
         },
       },
       animation: {
@@ -177,7 +205,7 @@ export function useAnalytics() {
         },
         title: {
           display: true,
-          text: 'Category Distribution',
+          text: 'Kudos by Title',
         },
       },
       animation: {
@@ -189,7 +217,8 @@ export function useAnalytics() {
   };
 
   return {
-    data,
+    dashboardData,
+    summary,
     chartData: formatChartData(),
     chartOptions,
     isLoading,

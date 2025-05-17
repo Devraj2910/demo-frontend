@@ -1,12 +1,4 @@
-import {
-  TeamKudos,
-  UserKudos,
-  CategoryDistribution,
-  TrendData,
-  WeeklyActivity,
-  AnalyticsSummary,
-  TimePeriod,
-} from '../entities/AnalyticsData';
+import { AnalyticsDashboardData, AnalyticsSummary, TimePeriod, AnalyticsFilters } from '../entities/AnalyticsData';
 
 /**
  * Analytics Repository Interface
@@ -14,46 +6,20 @@ import {
  */
 export interface AnalyticsRepository {
   /**
-   * Get summary statistics for the analytics dashboard
-   * @param period Time period for the stats
+   * Get complete dashboard analytics data
+   * @param filters Date filters for the analytics data
    */
-  getAnalyticsSummary(period: TimePeriod): Promise<AnalyticsSummary>;
+  getDashboardData(filters: AnalyticsFilters): Promise<AnalyticsDashboardData>;
 
   /**
-   * Get kudos data for each team
-   * @param period Time period for the stats
+   * Get summary statistics calculated from analytics data
+   * @param data The complete analytics data
    */
-  getTeamKudosData(period: TimePeriod): Promise<TeamKudos[]>;
+  calculateSummary(data: AnalyticsDashboardData): AnalyticsSummary;
 
   /**
-   * Get top kudos receivers
-   * @param period Time period for the stats
-   * @param limit Maximum number of users to return
+   * Convert time period to date range filters
+   * @param period Time period selection
    */
-  getTopReceivers(period: TimePeriod, limit?: number): Promise<UserKudos[]>;
-
-  /**
-   * Get top kudos givers
-   * @param period Time period for the stats
-   * @param limit Maximum number of users to return
-   */
-  getTopGivers(period: TimePeriod, limit?: number): Promise<UserKudos[]>;
-
-  /**
-   * Get distribution of kudos by category
-   * @param period Time period for the stats
-   */
-  getCategoryDistribution(period: TimePeriod): Promise<CategoryDistribution[]>;
-
-  /**
-   * Get trend data over time (e.g., monthly trend)
-   * @param period Time period for the stats
-   */
-  getTrendData(period: TimePeriod): Promise<TrendData[]>;
-
-  /**
-   * Get weekly activity data
-   * @param period Time period for the stats
-   */
-  getWeeklyActivity(period: TimePeriod): Promise<WeeklyActivity[]>;
+  getDateRangeFromPeriod(period: TimePeriod): AnalyticsFilters;
 }

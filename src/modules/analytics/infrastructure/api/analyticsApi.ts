@@ -1,19 +1,20 @@
-import { MockAnalyticsRepository } from '../repositories/MockAnalyticsRepository';
+import { AnalyticsRepositoryImpl } from '../repositories/AnalyticsRepositoryImpl';
+import { AnalyticsRepository } from '../../domain/repositories/AnalyticsRepository';
 
 /**
  * Analytics API client
- * This would normally connect to a backend API, but for now it uses the mock repository
+ * Provides access to the analytics repository implementation
  */
 class AnalyticsApiClient {
-  private repository: MockAnalyticsRepository;
+  private repository: AnalyticsRepository;
 
   constructor() {
-    this.repository = new MockAnalyticsRepository();
+    this.repository = new AnalyticsRepositoryImpl();
   }
 
   /**
    * Factory method to create an instance of the API client
-   * This pattern allows for easier switching between mock and real implementations
+   * This pattern allows for easier switching between implementations
    */
   static create(): AnalyticsApiClient {
     return new AnalyticsApiClient();
@@ -23,7 +24,7 @@ class AnalyticsApiClient {
    * Gets the repository instance
    * This allows the application layer to access the repository methods
    */
-  getRepository(): MockAnalyticsRepository {
+  getRepository(): AnalyticsRepository {
     return this.repository;
   }
 }

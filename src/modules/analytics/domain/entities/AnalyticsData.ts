@@ -2,34 +2,46 @@
  * Base types for Analytics data
  */
 
-export interface TeamKudos {
-  team: string;
-  count: number;
-  trend: string;
+export interface UserAnalytics {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  cardCount: number;
 }
 
-export interface UserKudos {
+export interface TeamAnalytics {
+  id: number;
   name: string;
-  team: string;
-  count: number;
-  avatar: string;
+  cardCount: number;
 }
 
-export interface CategoryDistribution {
-  category: string;
-  count: number;
-  color: string;
+export interface CardVolume {
+  total: number;
 }
 
-export interface TrendData {
-  period: string;
-  kudosSent: number;
-  newUsers?: number;
+export interface ActiveUsers {
+  activeUsers: number;
 }
 
-export interface WeeklyActivity {
-  day: string;
+export interface MonthlyAnalytics {
+  month: string;
+  activeUsers: number;
+  cardsCreated: number;
+}
+
+export interface TitleAnalytics {
+  title: string;
   count: number;
+}
+
+export interface AnalyticsDashboardData {
+  topReceivers: UserAnalytics[];
+  topCreators: UserAnalytics[];
+  teamAnalytics: TeamAnalytics[];
+  cardVolume: CardVolume;
+  activeUsers: ActiveUsers;
+  monthlyAnalytics: MonthlyAnalytics[];
+  titleAnalytics: TitleAnalytics[];
 }
 
 export interface AnalyticsSummary {
@@ -39,3 +51,8 @@ export interface AnalyticsSummary {
 }
 
 export type TimePeriod = 'Last Week' | 'Last Month' | 'Last Quarter' | 'Last Year' | 'All Time';
+
+export interface AnalyticsFilters {
+  startDate?: string;
+  endDate?: string;
+}
