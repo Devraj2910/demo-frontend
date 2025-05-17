@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/clean-architecture/auth/AuthContext';
+import { useAuth } from '@/modules/auth';
 import KudoCard from './components/KudoCard';
 import KudoForm from './components/KudoForm';
 
