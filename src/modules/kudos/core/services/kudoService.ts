@@ -1,9 +1,9 @@
-import { KudoRepository } from '../../domain/repositories/KudoRepository';
-import { UserRepository } from '../../domain/repositories/UserRepository';
-import { Kudo, KudoFilters, CreateKudoRequest, User } from '../../domain/entities/KudoEntities';
+import { KudoRepository } from '../interfaces/repositories/kudoRepository';
+import { UserRepository } from '../interfaces/repositories/userRepository';
+import { Kudo, KudoFilters, CreateKudoRequest, User } from '../types/kudoTypes';
 
 /**
- * Service for managing kudos
+ * Service for managing kudos operations
  */
 export class KudoService {
   constructor(private kudoRepository: KudoRepository, private userRepository: UserRepository) {}
@@ -21,6 +21,14 @@ export class KudoService {
    */
   async getFilteredKudos(filters: KudoFilters): Promise<Kudo[]> {
     return this.kudoRepository.getFilteredKudos(filters);
+  }
+
+  /**
+   * Get a kudo by ID
+   * @param id Kudo ID
+   */
+  async getKudoById(id: string): Promise<Kudo | null> {
+    return this.kudoRepository.getKudoById(id);
   }
 
   /**
@@ -43,7 +51,8 @@ export class KudoService {
    */
   async getTeams(): Promise<string[]> {
     const users = await this.userRepository.getAllUsers();
-    const teams = users.map((user) => user.team);
+    const teams = users.map((user) => user.team).filter((team): team is string => team !== undefined);
+
     // Get unique team names
     return Array.from(new Set(teams));
   }

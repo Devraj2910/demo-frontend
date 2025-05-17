@@ -1,5 +1,5 @@
 'use client';
-import { Kudo } from '../../domain/entities/Kudo';
+import { Kudo } from '../../core/types/kudoTypes';
 
 // Map categories to colors for the entire card
 const categoryColors: Record<string, string> = {

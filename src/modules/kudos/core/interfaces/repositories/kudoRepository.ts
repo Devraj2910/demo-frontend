@@ -1,4 +1,4 @@
-import { Kudo, KudoFilters, CreateKudoRequest } from '../entities/KudoEntities';
+import { Kudo, KudoFilters, CreateKudoRequest } from '../../types/kudoTypes';
 
 /**
  * Repository interface for kudos operations

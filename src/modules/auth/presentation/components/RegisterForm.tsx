@@ -3,6 +3,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { UserRole } from '../../core/types/authTypes';
+import TeamSelectDropdown from '../../../kudos/presentation/components/TeamSelectDropdown';
 
 interface RegisterFormProps {
   loading: boolean;
@@ -35,24 +36,24 @@ export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin
   const {
     register,
     handleSubmit,
+    setValue,
     watch,
     formState: { errors },
-  } = useForm<RegisterFormValues>({
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      team: 'Alpha',
-      role: 'team_member' as UserRole,
-    },
-  });
+  } = useForm<RegisterFormValues>();
 
-  // Watch the password field to use for validation
   const password = watch('password');
 
+  const onFormSubmit = (data: RegisterFormValues) => {
+    onSubmit(data);
+  };
+
+  // Handle team selection from TeamSelectDropdown
+  const handleTeamChange = (team: string) => {
+    setValue('team', team, { shouldValidate: true });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='h-full flex flex-col'>
+    <form onSubmit={handleSubmit(onFormSubmit)} className='h-full flex flex-col'>
       {error && (
         <div className='bg-red-50 border-l-4 border-auth-error p-4 mb-6 rounded-r'>
           <div className='flex'>
@@ -111,19 +112,17 @@ export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin
       </div>
 
       <div className='mb-4'>
-        <label htmlFor='team' className='block text-sm font-medium text-gray-700 mb-1'>
-          Team
-        </label>
-        <input
+        <TeamSelectDropdown
           id='team'
-          type='text'
-          className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
-            errors.team ? 'border-auth-error' : 'border-auth-border'
-          }`}
-          placeholder='Developer, Manager, etc.'
-          {...register('team', { required: 'Team is required' })}
+          label='Team'
+          includeAllTeams={false}
+          value={watch('team')}
+          onChange={handleTeamChange}
+          required={true}
+          errorMessage={errors.team?.message}
+          className={`${errors.team ? 'border-auth-error' : 'border-auth-border'}`}
         />
-        {errors.team && <p className='mt-1 text-sm text-auth-error'>{errors.team.message}</p>}
+        <input type='hidden' {...register('team', { required: 'Team is required' })} />
       </div>
 
       <div className='mb-4'>

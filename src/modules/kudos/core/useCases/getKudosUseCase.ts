@@ -1,5 +1,5 @@
-import { KudoService } from '../services/KudoService';
-import { KudoFilters } from '../../domain/entities/KudoEntities';
+import { KudoService } from '../services/kudoService';
+import { KudoFilters, UseCaseResult, Kudo } from '../types/kudoTypes';
 
 /**
  * Use case for retrieving kudos
@@ -11,10 +11,9 @@ export class GetKudosUseCase {
    * Execute the use case to get kudos with optional filters
    * @param filters Optional filters to apply
    */
-  async execute(filters?: KudoFilters) {
+  async execute(filters?: KudoFilters): Promise<UseCaseResult<Kudo[]>> {
     try {
       const kudos = filters ? await this.kudoService.getFilteredKudos(filters) : await this.kudoService.getAllKudos();
-
       return {
         success: true,
         data: kudos,
