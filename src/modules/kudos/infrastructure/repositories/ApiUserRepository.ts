@@ -47,7 +47,7 @@ export class ApiUserRepository implements UserRepository {
     try {
       // Make API request with search query
       const response = await axios.get(`${API_URL}/users/search`, {
-        params: { search: query },
+        params: { searchText: query },
         headers: getAuthHeaders(),
       });
 

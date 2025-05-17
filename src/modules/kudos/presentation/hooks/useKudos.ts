@@ -6,6 +6,7 @@ import { KudoRepository } from '../../core/interfaces/repositories/kudoRepositor
 import { UserRepository } from '../../core/interfaces/repositories/userRepository';
 import { ApiKudoRepository } from '../../infrastructure/repositories/ApiKudoRepository';
 import { ApiUserRepository } from '../../infrastructure/repositories/ApiUserRepository';
+import { KudoApiResponse } from '../../core/interfaces/repositories/kudoRepository';
 
 // Initialize repositories and service once outside of the component
 const kudoRepository: KudoRepository = new ApiKudoRepository();
@@ -13,12 +14,20 @@ const userRepository: UserRepository = new ApiUserRepository();
 const kudoService = new KudoService(kudoRepository, userRepository);
 const getKudosUseCase = new GetKudosUseCase(kudoService);
 
+interface PaginationData {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 interface UseKudosResult {
   kudos: Kudo[];
   isLoading: boolean;
   error: string | null;
   refreshKudos: () => void;
   filterKudos: (filters: KudoFilters) => void;
+  pagination: PaginationData | null;
 }
 
 /**
@@ -29,6 +38,7 @@ export const useKudos = (initialFilters?: KudoFilters): UseKudosResult => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<KudoFilters | undefined>(initialFilters);
+  const [pagination, setPagination] = useState<PaginationData | null>(null);
 
   // Function to load kudos with current filters
   const loadKudos = useCallback(async () => {
@@ -39,22 +49,26 @@ export const useKudos = (initialFilters?: KudoFilters): UseKudosResult => {
       const result = await getKudosUseCase.execute(filters);
 
       if (result.success && result.data) {
-        // Ensure we always have an array, even if the API returns something unexpected
-        console.log(result.data);
-        if (Array.isArray(result.data)) {
-          setKudos(result.data);
-        } else {
-          console.error('Unexpected data format received from API:', result.data);
-          setKudos([]);
-          setError('Invalid data format received from server');
-        }
+        console.log('API Response:', result.data);
+        setKudos(result.data.cards);
+        console.log(result.data.cards);
+
+        // Extract pagination data
+        setPagination({
+          total: result.data.total || 0,
+          page: result.data.page || 1,
+          limit: result.data.limit || 20,
+          totalPages: result.data.totalPages || 1,
+        });
       } else {
         setKudos([]);
+        setPagination(null);
         setError(result.error || 'Failed to load kudos');
       }
     } catch (err) {
       console.error('Error in useKudos:', err);
       setKudos([]);
+      setPagination(null);
       setError('An unexpected error occurred while loading kudos');
     } finally {
       setIsLoading(false);
@@ -82,5 +96,6 @@ export const useKudos = (initialFilters?: KudoFilters): UseKudosResult => {
     error,
     refreshKudos,
     filterKudos,
+    pagination,
   };
 };

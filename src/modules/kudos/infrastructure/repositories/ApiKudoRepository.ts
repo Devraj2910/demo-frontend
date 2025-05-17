@@ -19,18 +19,27 @@ const getAuthHeaders = () => {
   };
 };
 
+// Define the API response type to match what the server returns
+interface KudoApiResponse {
+  cards: Kudo[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export class ApiKudoRepository implements KudoRepository {
   /**
    * Get all kudos
    */
-  async getAllKudos(): Promise<Kudo[]> {
+  async getAllKudos(): Promise<KudoApiResponse> {
     try {
       const response = await axios.get(`${API_URL}/cards`, {
         headers: getAuthHeaders(),
       });
 
       if (response.status >= 200 && response.status < 300) {
-        return response.data;
+        return response.data.data;
       } else {
         throw new Error(`Server returned status ${response.status}`);
       }
@@ -43,7 +52,7 @@ export class ApiKudoRepository implements KudoRepository {
   /**
    * Get kudos with filters applied
    */
-  async getFilteredKudos(filters: KudoFilters): Promise<Kudo[]> {
+  async getFilteredKudos(filters: KudoFilters): Promise<KudoApiResponse> {
     try {
       // Construct query parameters
       const queryParams = new URLSearchParams();
@@ -69,7 +78,7 @@ export class ApiKudoRepository implements KudoRepository {
       });
 
       if (response.status >= 200 && response.status < 300) {
-        return response.data;
+        return response.data.data;
       } else {
         throw new Error(`Server returned status ${response.status}`);
       }
@@ -89,7 +98,7 @@ export class ApiKudoRepository implements KudoRepository {
       });
 
       if (response.status >= 200 && response.status < 300) {
-        return response.data;
+        return response.data.data;
       } else if (response.status === 404) {
         return null;
       } else {
@@ -121,7 +130,7 @@ export class ApiKudoRepository implements KudoRepository {
       });
 
       if (response.status >= 200 && response.status < 300) {
-        return response.data;
+        return response.data.data;
       } else {
         throw new Error(`Server returned status ${response.status}`);
       }

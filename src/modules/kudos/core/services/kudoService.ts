@@ -1,4 +1,4 @@
-import { KudoRepository } from '../interfaces/repositories/kudoRepository';
+import { KudoRepository, KudoApiResponse } from '../interfaces/repositories/kudoRepository';
 import { UserRepository } from '../interfaces/repositories/userRepository';
 import { Kudo, KudoFilters, CreateKudoRequest, User } from '../types/kudoTypes';
 
@@ -11,7 +11,7 @@ export class KudoService {
   /**
    * Get all kudos
    */
-  async getAllKudos(): Promise<Kudo[]> {
+  async getAllKudos(): Promise<KudoApiResponse> {
     return this.kudoRepository.getAllKudos();
   }
 
@@ -19,7 +19,7 @@ export class KudoService {
    * Get filtered kudos
    * @param filters Filters to apply
    */
-  async getFilteredKudos(filters: KudoFilters): Promise<Kudo[]> {
+  async getFilteredKudos(filters: KudoFilters): Promise<KudoApiResponse> {
     return this.kudoRepository.getFilteredKudos(filters);
   }
 

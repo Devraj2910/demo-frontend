@@ -46,11 +46,14 @@ export default function KudoWallPage() {
 
       {/* Show form when isFormVisible is true */}
       {isFormVisible && (
-        <div className='mb-8'>{/* <KudoForm onSuccess={handleFormSuccess} onCancel={toggleForm} /> */}</div>
+        <div className='mb-8'>
+          {' '}
+          <KudoForm onSuccess={handleFormSuccess} onCancel={toggleForm} />{' '}
+        </div>
       )}
 
       {/* Filter component */}
-      {/* <KudoFilter onFilterChange={handleFilterChange} /> */}
+      <KudoFilter onFilterChange={handleFilterChange} />
 
       {/* Error message if any */}
       {error && (
