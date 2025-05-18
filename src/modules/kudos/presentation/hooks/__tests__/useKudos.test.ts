@@ -1,64 +1,73 @@
-import { renderHook, act } from '@testing-library/react-hooks';
-import { useKudos } from '../useKudos';
-import { GetKudosUseCase } from '../../../core/useCases/getKudosUseCase';
-import { KudoService } from '../../../core/services/kudoService';
-import { KudoFilters } from '../../../core/types/kudoTypes';
+import { renderHook, act } from "@testing-library/react-hooks";
+import { useKudos } from "../useKudos";
+import { GetKudosUseCase } from "../../../core/useCases/getKudosUseCase";
+import { KudoFilters } from "../../../core/types/kudoTypes";
 
-// Mock dependencies
-jest.mock('../../../core/useCases/getKudosUseCase');
-jest.mock('../../../core/services/kudoService');
-jest.mock('../../../infrastructure/repositories/mockKudoRepository');
-jest.mock('../../../infrastructure/repositories/mockUserRepository');
+// No need to mock modules, we'll inject the mock directly
+jest.mock("console", () => ({
+  log: jest.fn(),
+  error: jest.fn(),
+}));
 
-describe('useKudos hook', () => {
+describe("useKudos hook", () => {
   // Sample data
-  const mockKudos = [
+  const mockKudoData = [
     {
-      id: '1',
-      title: 'Great job',
-      content: 'Thanks for your help',
-      userId: 'user1',
-      createdFor: 'user2',
-      createdAt: '2023-01-01',
-      updatedAt: '2023-01-01',
+      id: "1",
+      title: "Great job",
+      content: "Thanks for your help",
+      userId: "user1",
+      createdFor: "user2",
+      createdAt: "2023-01-01",
+      updatedAt: "2023-01-01",
       creator: {
-        id: 'user1',
-        email: 'user1@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        fullName: 'John Doe',
+        id: "user1",
+        email: "user1@example.com",
+        firstName: "John",
+        lastName: "Doe",
+        fullName: "John Doe",
       },
       recipient: {
-        id: 'user2',
-        email: 'user2@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        fullName: 'Jane Smith',
+        id: "user2",
+        email: "user2@example.com",
+        firstName: "Jane",
+        lastName: "Smith",
+        fullName: "Jane Smith",
       },
     },
   ];
 
+  // Create API response structure matching what the hook expects
+  const mockApiResponse = {
+    cards: mockKudoData,
+    total: 1,
+    page: 1,
+    limit: 20,
+    totalPages: 1,
+  };
+
   // Mock implementation
-  const mockExecute = jest.fn();
+  let mockExecute;
+  let mockUseCaseInstance;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
-    // Setup success response
-    mockExecute.mockResolvedValue({
+    // Setup fresh mocks for each test
+    mockExecute = jest.fn().mockResolvedValue({
       success: true,
-      data: mockKudos,
+      data: mockApiResponse,
     });
 
-    // Mock GetKudosUseCase implementation
-    (GetKudosUseCase as jest.Mock).mockImplementation(() => ({
+    // Create a mock use case instance
+    mockUseCaseInstance = {
       execute: mockExecute,
-    }));
+    };
   });
 
-  it('should fetch kudos on initial render', async () => {
-    // Arrange & Act
-    const { result, waitForNextUpdate } = renderHook(() => useKudos());
+  it("should fetch kudos on initial render", async () => {
+    // Arrange & Act - Pass the mock use case instance directly
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useKudos(undefined, mockUseCaseInstance as unknown as GetKudosUseCase)
+    );
 
     // Assert - Initial state
     expect(result.current.kudos).toEqual([]);
@@ -70,25 +79,34 @@ describe('useKudos hook', () => {
 
     // Assert - After data load
     expect(mockExecute).toHaveBeenCalled();
-    expect(result.current.kudos).toEqual(mockKudos);
+    expect(result.current.kudos).toEqual(mockKudoData);
     expect(result.current.isLoading).toBeFalsy();
     expect(result.current.error).toBeNull();
   });
 
-  it('should filter kudos when filterKudos is called', async () => {
-    // Arrange
-    const { result, waitForNextUpdate } = renderHook(() => useKudos());
+  it("should filter kudos when filterKudos is called", async () => {
+    // Arrange - Pass the mock use case instance directly
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useKudos(undefined, mockUseCaseInstance as unknown as GetKudosUseCase)
+    );
 
     // Wait for initial load
     await waitForNextUpdate();
 
     // Setup new mock response for filtered data
-    const filters: KudoFilters = { searchTerm: 'test' };
-    const filteredKudos = [mockKudos[0]]; // Pretend this is filtered
+    const filters: KudoFilters = { searchTerm: "test" };
+    const filteredKudoData = [mockKudoData[0]]; // Pretend this is filtered
+    const filteredApiResponse = {
+      cards: filteredKudoData,
+      total: 1,
+      page: 1,
+      limit: 20,
+      totalPages: 1,
+    };
 
     mockExecute.mockResolvedValueOnce({
       success: true,
-      data: filteredKudos,
+      data: filteredApiResponse,
     });
 
     // Act - Call filter function
@@ -101,19 +119,21 @@ describe('useKudos hook', () => {
 
     // Assert
     expect(mockExecute).toHaveBeenCalledWith(filters);
-    expect(result.current.kudos).toEqual(filteredKudos);
+    expect(result.current.kudos).toEqual(filteredKudoData);
   });
 
-  it('should handle errors during data fetch', async () => {
+  it("should handle errors during data fetch", async () => {
     // Arrange
-    const errorMessage = 'Failed to load kudos';
+    const errorMessage = "Failed to load kudos";
     mockExecute.mockResolvedValueOnce({
       success: false,
       error: errorMessage,
     });
 
-    // Act
-    const { result, waitForNextUpdate } = renderHook(() => useKudos());
+    // Act - Pass the mock use case instance directly
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useKudos(undefined, mockUseCaseInstance as unknown as GetKudosUseCase)
+    );
 
     // Wait for the async operation to complete
     await waitForNextUpdate();
@@ -124,15 +144,23 @@ describe('useKudos hook', () => {
     expect(result.current.error).toBe(errorMessage);
   });
 
-  it('should refresh kudos when refreshKudos is called', async () => {
-    // Arrange
-    const { result, waitForNextUpdate } = renderHook(() => useKudos());
+  it("should refresh kudos when refreshKudos is called", async () => {
+    // Arrange - Pass the mock use case instance directly
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useKudos(undefined, mockUseCaseInstance as unknown as GetKudosUseCase)
+    );
 
     // Wait for initial load
     await waitForNextUpdate();
 
     // Clear previous calls count
     mockExecute.mockClear();
+
+    // Setup a new response for the refresh
+    mockExecute.mockResolvedValueOnce({
+      success: true,
+      data: mockApiResponse,
+    });
 
     // Act - Call refresh function
     act(() => {

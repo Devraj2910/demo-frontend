@@ -1,9 +1,14 @@
-import { KudoService } from '../kudoService';
-import { KudoRepository } from '../../interfaces/repositories/kudoRepository';
-import { UserRepository } from '../../interfaces/repositories/userRepository';
-import { Kudo, KudoFilters, CreateKudoRequest, User } from '../../types/kudoTypes';
+import { KudoService } from "../kudoService";
+import { KudoRepository } from "../../interfaces/repositories/kudoRepository";
+import { UserRepository } from "../../interfaces/repositories/userRepository";
+import {
+  Kudo,
+  KudoFilters,
+  CreateKudoRequest,
+  User,
+} from "../../types/kudoTypes";
 
-describe('KudoService', () => {
+describe("KudoService", () => {
   let kudoService: KudoService;
   let mockKudoRepository: jest.Mocked<KudoRepository>;
   let mockUserRepository: jest.Mocked<UserRepository>;
@@ -11,54 +16,54 @@ describe('KudoService', () => {
   // Mock data
   const mockKudos: Kudo[] = [
     {
-      id: '1',
-      title: 'Great job',
-      content: 'Thanks for your help',
-      userId: 'user1',
-      createdFor: 'user2',
-      createdAt: '2023-01-01',
-      updatedAt: '2023-01-01',
+      id: "1",
+      title: "Great job",
+      content: "Thanks for your help",
+      userId: "user1",
+      createdFor: "user2",
+      createdAt: "2023-01-01",
+      updatedAt: "2023-01-01",
       creator: {
-        id: 'user1',
-        email: 'user1@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        fullName: 'John Doe',
+        id: "user1",
+        email: "user1@example.com",
+        firstName: "John",
+        lastName: "Doe",
+        fullName: "John Doe",
       },
       recipient: {
-        id: 'user2',
-        email: 'user2@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        fullName: 'Jane Smith',
+        id: "user2",
+        email: "user2@example.com",
+        firstName: "Jane",
+        lastName: "Smith",
+        fullName: "Jane Smith",
       },
     },
   ];
 
   const mockUsers: User[] = [
     {
-      id: 'user1',
-      email: 'user1@example.com',
-      firstName: 'John',
-      lastName: 'Doe',
-      fullName: 'John Doe',
-      team: 'Engineering',
+      id: "user1",
+      email: "user1@example.com",
+      firstName: "John",
+      lastName: "Doe",
+      fullName: "John Doe",
+      team: "Engineering",
     },
     {
-      id: 'user2',
-      email: 'user2@example.com',
-      firstName: 'Jane',
-      lastName: 'Smith',
-      fullName: 'Jane Smith',
-      team: 'Design',
+      id: "user2",
+      email: "user2@example.com",
+      firstName: "Jane",
+      lastName: "Smith",
+      fullName: "Jane Smith",
+      team: "Design",
     },
     {
-      id: 'user3',
-      email: 'user3@example.com',
-      firstName: 'Bob',
-      lastName: 'Johnson',
-      fullName: 'Bob Johnson',
-      team: 'Marketing',
+      id: "user3",
+      email: "user3@example.com",
+      firstName: "Bob",
+      lastName: "Johnson",
+      fullName: "Bob Johnson",
+      team: "Marketing",
     },
   ];
 
@@ -78,6 +83,7 @@ describe('KudoService', () => {
       getUserById: jest.fn(),
       getCurrentUser: jest.fn(),
       searchUsers: jest.fn(),
+      getTeams: jest.fn(),
     } as jest.Mocked<UserRepository>;
 
     // Create service with mock repositories
@@ -88,8 +94,8 @@ describe('KudoService', () => {
     jest.clearAllMocks();
   });
 
-  describe('getAllKudos', () => {
-    it('should call the repository and return all kudos', async () => {
+  describe("getAllKudos", () => {
+    it("should call the repository and return all kudos", async () => {
       // Arrange
       mockKudoRepository.getAllKudos.mockResolvedValue(mockKudos);
 
@@ -102,10 +108,10 @@ describe('KudoService', () => {
     });
   });
 
-  describe('getFilteredKudos', () => {
-    it('should call the repository with filters and return filtered kudos', async () => {
+  describe("getFilteredKudos", () => {
+    it("should call the repository with filters and return filtered kudos", async () => {
       // Arrange
-      const filters: KudoFilters = { searchTerm: 'test', team: 'Engineering' };
+      const filters: KudoFilters = { searchTerm: "test", team: "Engineering" };
       mockKudoRepository.getFilteredKudos.mockResolvedValue(mockKudos);
 
       // Act
@@ -117,10 +123,10 @@ describe('KudoService', () => {
     });
   });
 
-  describe('getKudoById', () => {
-    it('should call the repository with ID and return a kudo', async () => {
+  describe("getKudoById", () => {
+    it("should call the repository with ID and return a kudo", async () => {
       // Arrange
-      const kudoId = '1';
+      const kudoId = "1";
       mockKudoRepository.getKudoById.mockResolvedValue(mockKudos[0]);
 
       // Act
@@ -131,9 +137,9 @@ describe('KudoService', () => {
       expect(result).toEqual(mockKudos[0]);
     });
 
-    it('should return null when kudo is not found', async () => {
+    it("should return null when kudo is not found", async () => {
       // Arrange
-      const kudoId = 'non-existent';
+      const kudoId = "non-existent";
       mockKudoRepository.getKudoById.mockResolvedValue(null);
 
       // Act
@@ -145,13 +151,13 @@ describe('KudoService', () => {
     });
   });
 
-  describe('createKudo', () => {
-    it('should get current user and call repository to create kudo', async () => {
+  describe("createKudo", () => {
+    it("should get current user and call repository to create kudo", async () => {
       // Arrange
       const kudoData: CreateKudoRequest = {
-        title: 'Great work',
-        content: 'Thank you!',
-        recipientId: 'user2',
+        title: "Great work",
+        content: "Thank you!",
+        recipientId: "user2",
       };
 
       const createdKudo: Kudo = {
@@ -168,59 +174,70 @@ describe('KudoService', () => {
 
       // Assert
       expect(mockUserRepository.getCurrentUser).toHaveBeenCalled();
-      expect(mockKudoRepository.createKudo).toHaveBeenCalledWith(kudoData, mockCurrentUser.id);
+      expect(mockKudoRepository.createKudo).toHaveBeenCalledWith(
+        kudoData,
+        mockCurrentUser.id
+      );
       expect(result).toEqual(createdKudo);
     });
 
-    it('should throw error when user is not authenticated', async () => {
+    it("should throw error when user is not authenticated", async () => {
       // Arrange
       const kudoData: CreateKudoRequest = {
-        title: 'Great work',
-        content: 'Thank you!',
-        recipientId: 'user2',
+        title: "Great work",
+        content: "Thank you!",
+        recipientId: "user2",
       };
 
       mockUserRepository.getCurrentUser.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(kudoService.createKudo(kudoData)).rejects.toThrow('User not authenticated');
+      await expect(kudoService.createKudo(kudoData)).rejects.toThrow(
+        "User not authenticated"
+      );
       expect(mockUserRepository.getCurrentUser).toHaveBeenCalled();
       expect(mockKudoRepository.createKudo).not.toHaveBeenCalled();
     });
   });
 
-  describe('getTeams', () => {
-    it('should return unique teams from users', async () => {
+  describe("getTeams", () => {
+    it("should return unique teams from users", async () => {
       // Arrange
-      mockUserRepository.getAllUsers.mockResolvedValue(mockUsers);
-      const expectedTeams = ['Engineering', 'Design', 'Marketing'];
+      const mockTeams = ["Engineering", "Design", "Marketing"].map(
+        (name, index) => ({
+          id: index + 1,
+          name,
+          createdAt: "2023-01-01",
+          updatedAt: "2023-01-01",
+        })
+      );
+      mockUserRepository.getTeams.mockResolvedValue(mockTeams);
 
       // Act
       const result = await kudoService.getTeams();
 
       // Assert
-      expect(mockUserRepository.getAllUsers).toHaveBeenCalled();
-      expect(result).toEqual(expectedTeams);
+      expect(mockUserRepository.getTeams).toHaveBeenCalled();
+      expect(result).toEqual(mockTeams);
     });
 
-    it('should return empty array when no teams exist', async () => {
+    it("should return empty array when no teams exist", async () => {
       // Arrange
-      const usersWithoutTeams = mockUsers.map((user) => ({ ...user, team: undefined }));
-      mockUserRepository.getAllUsers.mockResolvedValue(usersWithoutTeams);
+      mockUserRepository.getTeams.mockResolvedValue([]);
 
       // Act
       const result = await kudoService.getTeams();
 
       // Assert
-      expect(mockUserRepository.getAllUsers).toHaveBeenCalled();
+      expect(mockUserRepository.getTeams).toHaveBeenCalled();
       expect(result).toEqual([]);
     });
   });
 
-  describe('searchUsers', () => {
-    it('should call repository and return search results', async () => {
+  describe("searchUsers", () => {
+    it("should call repository and return search results", async () => {
       // Arrange
-      const query = 'John';
+      const query = "John";
       mockUserRepository.searchUsers.mockResolvedValue([mockUsers[0]]);
 
       // Act
@@ -232,8 +249,8 @@ describe('KudoService', () => {
     });
   });
 
-  describe('getCurrentUser', () => {
-    it('should call repository and return current user', async () => {
+  describe("getCurrentUser", () => {
+    it("should call repository and return current user", async () => {
       // Arrange
       mockUserRepository.getCurrentUser.mockResolvedValue(mockCurrentUser);
 
@@ -245,7 +262,7 @@ describe('KudoService', () => {
       expect(result).toEqual(mockCurrentUser);
     });
 
-    it('should return null when user is not authenticated', async () => {
+    it("should return null when user is not authenticated", async () => {
       // Arrange
       mockUserRepository.getCurrentUser.mockResolvedValue(null);
 
