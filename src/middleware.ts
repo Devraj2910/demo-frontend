@@ -22,14 +22,14 @@ export function middleware(request: NextRequest) {
   const authToken = request.cookies.get('auth_token')?.value;
   const userRole = request.cookies.get('user_role')?.value;
 
-  // If it's a protected route and there's no token, redirect to home page
+  // If it's a protected route and there's no token, redirect to previous route
   if ((isProtectedRoute || isAdminRoute) && !authToken) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // If it's an admin route and user is not an admin, redirect to home page
+  // If it's an admin route and user is not an admin, redirect to previous route
   if (isAdminRoute && userRole !== 'admin') {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/kudowall', request.url));
   }
 
   // Allow the request
