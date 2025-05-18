@@ -70,6 +70,15 @@ export function getUserRole(): UserRole | null {
 }
 
 /**
+ * Check if user has admin or tech-lead privileges
+ * @returns boolean indicating if the user has sufficient privileges
+ */
+export function hasAdminOrTechLeadPrivileges(): boolean {
+  const role = getUserRole();
+  return role === 'admin' || role === 'tech-lead';
+}
+
+/**
  * Clear all authentication data from storage
  */
 export function clearAuthData(): void {
