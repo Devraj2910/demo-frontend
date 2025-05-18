@@ -1,27 +1,23 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { AuthProvider } from "@/modules/auth";
-import { initializeAnalyticsModule } from "@/modules/analytics/core/services/setupAnalyticsService";
-import { ThemeProvider } from "next-themes";
-import NavigationBar from "./NavigationBar";
+import React, { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { AuthProvider } from '@/modules/auth';
+import { initializeAnalyticsModule } from '@/modules/analytics/core/services/setupAnalyticsService';
+import { ThemeProvider } from 'next-themes';
+import NavigationBar from './NavigationBar';
 
 // Initialize modules immediately
 // This ensures modules are initialized before any components render
 // We want this to happen on the client side only, so keep it inside the 'use client' file
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   initializeAnalyticsModule();
-  console.log("Modules initialized before component render");
+  console.log('Modules initialized before component render');
 }
 
-export default function ClientLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHomePage = pathname === "/";
+  const isHomePage = pathname === '/';
   const [initialized, setInitialized] = useState(false);
 
   // Double-check that modules are initialized
@@ -34,10 +30,10 @@ export default function ClientLayout({
   }, [initialized]);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
       <AuthProvider>
         {!isHomePage && <NavigationBar />}
-        <main className={`${!isHomePage ? "mt-16" : ""}`}>{children}</main>
+        <main className={`${!isHomePage ? 'mt-16' : ''}`}>{children}</main>
       </AuthProvider>
     </ThemeProvider>
   );

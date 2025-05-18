@@ -251,4 +251,16 @@ export class MockKudoRepository implements KudoRepository {
 
     return this.mockApiCall(newKudo);
   }
+
+  /**
+   * Delete a kudo by ID
+   * @param id Kudo ID
+   */
+  async deleteKudo(id: string): Promise<void> {
+    const index = this.kudos.findIndex((kudo) => kudo.id === id);
+    if (index !== -1) {
+      this.kudos.splice(index, 1);
+    }
+    return this.mockApiCall(undefined);
+  }
 }

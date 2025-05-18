@@ -1,18 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
-import { Kudo, KudoFilters } from "../../core/types/kudoTypes";
-import { KudoService } from "../../core/services/kudoService";
-import { GetKudosUseCase } from "../../core/useCases/getKudosUseCase";
-import { KudoRepository } from "../../core/interfaces/repositories/kudoRepository";
-import { UserRepository } from "../../core/interfaces/repositories/userRepository";
-import { ApiKudoRepository } from "../../infrastructure/repositories/ApiKudoRepository";
-import { ApiUserRepository } from "../../infrastructure/repositories/ApiUserRepository";
-import { KudoApiResponse } from "../../core/interfaces/repositories/kudoRepository";
+import { useState, useEffect, useCallback } from 'react';
+import { Kudo, KudoFilters } from '../../core/types/kudoTypes';
+import { KudoService } from '../../core/services/kudoService';
+import { GetKudosUseCase } from '../../core/useCases/getKudosUseCase';
+import { DeleteKudoUseCase } from '../../core/useCases/deleteKudoUseCase';
+import { KudoRepository } from '../../core/interfaces/repositories/kudoRepository';
+import { UserRepository } from '../../core/interfaces/repositories/userRepository';
+import { ApiKudoRepository } from '../../infrastructure/repositories/ApiKudoRepository';
+import { ApiUserRepository } from '../../infrastructure/repositories/ApiUserRepository';
+import { KudoApiResponse } from '../../core/interfaces/repositories/kudoRepository';
 
 // Initialize repositories and service once outside of the component
 const kudoRepository: KudoRepository = new ApiKudoRepository();
 const userRepository: UserRepository = new ApiUserRepository();
 const kudoService = new KudoService(kudoRepository, userRepository);
 const defaultGetKudosUseCase = new GetKudosUseCase(kudoService);
+const deleteKudoUseCase = new DeleteKudoUseCase(kudoService);
 
 interface PaginationData {
   total: number;
@@ -27,22 +29,19 @@ interface UseKudosResult {
   error: string | null;
   refreshKudos: () => void;
   filterKudos: (filters: KudoFilters) => void;
+  deleteKudo: (id: string) => Promise<boolean>;
   pagination: PaginationData | null;
+  setKudos: React.Dispatch<React.SetStateAction<Kudo[]>>;
 }
 
 /**
  * Hook for working with kudos data
  */
-export const useKudos = (
-  initialFilters?: KudoFilters,
-  getKudosUseCase = defaultGetKudosUseCase
-): UseKudosResult => {
+export const useKudos = (initialFilters?: KudoFilters, getKudosUseCase = defaultGetKudosUseCase): UseKudosResult => {
   const [kudos, setKudos] = useState<Kudo[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<KudoFilters | undefined>(
-    initialFilters
-  );
+  const [filters, setFilters] = useState<KudoFilters | undefined>(initialFilters);
   const [pagination, setPagination] = useState<PaginationData | null>(null);
 
   // Function to load kudos with current filters
@@ -54,7 +53,7 @@ export const useKudos = (
       const result = await getKudosUseCase.execute(filters);
 
       if (result.success && result.data) {
-        console.log("API Response:", result.data);
+        console.log('API Response:', result.data);
         setKudos(result.data.cards);
         console.log(result.data.cards);
 
@@ -68,13 +67,13 @@ export const useKudos = (
       } else {
         setKudos([]);
         setPagination(null);
-        setError(result.error || "Failed to load kudos");
+        setError(result.error || 'Failed to load kudos');
       }
     } catch (err) {
-      console.error("Error in useKudos:", err);
+      console.error('Error in useKudos:', err);
       setKudos([]);
       setPagination(null);
-      setError("An unexpected error occurred while loading kudos");
+      setError('An unexpected error occurred while loading kudos');
     } finally {
       setIsLoading(false);
     }
@@ -95,12 +94,34 @@ export const useKudos = (
     setFilters(newFilters);
   }, []);
 
+  // Function to delete a kudo
+  const deleteKudo = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      const result = await deleteKudoUseCase.execute(id);
+
+      if (result.success) {
+        // Optimistically update the UI by removing the deleted kudo
+        setKudos((prevKudos) => prevKudos.filter((kudo) => kudo.id !== id));
+        return true;
+      } else {
+        setError(result.error || 'Failed to delete kudo');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error deleting kudo:', err);
+      setError('An unexpected error occurred while deleting the kudo');
+      return false;
+    }
+  }, []);
+
   return {
     kudos,
     isLoading,
     error,
     refreshKudos,
     filterKudos,
+    deleteKudo,
     pagination,
+    setKudos,
   };
 };

@@ -4,15 +4,33 @@ import KudoList from '../components/KudoList';
 import KudoFilter from '../components/KudoFilter';
 import KudoForm from '../components/KudoForm';
 import { useKudos } from '../hooks/useKudos';
+import { useKudoDeletion } from '../hooks/useKudoDeletion';
 import { KudoFilters } from '../../core/types/kudoTypes';
 import { hasAdminOrTechLeadPrivileges } from '@/modules/auth/presentation/utils/authUtils';
 
 export default function KudoWallPage() {
   // State for controlling form visibility
   const [isFormVisible, setIsFormVisible] = useState(false);
+  // State for status messages
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   // Load kudos with the useKudos hook
-  const { kudos, isLoading, error, filterKudos, refreshKudos } = useKudos();
+  const { kudos, isLoading, error: kudosError, filterKudos, refreshKudos, setKudos } = useKudos();
+
+  // Use the deletion hook
+  const {
+    deleteKudo,
+    isDeleting,
+    error: deleteError,
+  } = useKudoDeletion({
+    kudos,
+    onUpdateKudosList: setKudos,
+    onDeleteSuccess: (id) => {
+      setStatusMessage({ text: 'Kudo deleted successfully!', type: 'success' });
+      // Clear success message after 3 seconds
+      setTimeout(() => setStatusMessage(null), 3000);
+    },
+  });
 
   // Handle form visibility toggle
   const toggleForm = () => {
@@ -23,12 +41,33 @@ export default function KudoWallPage() {
   const handleFormSuccess = () => {
     setIsFormVisible(false);
     refreshKudos();
+    setStatusMessage({ text: 'Kudo created successfully!', type: 'success' });
+    setTimeout(() => setStatusMessage(null), 3000);
   };
 
   // Handle filter changes
   const handleFilterChange = (filters: KudoFilters) => {
     filterKudos(filters);
   };
+
+  // Handle kudo deletion with loading and error states
+  const handleDeleteKudo = async (id: string) => {
+    try {
+      const success = await deleteKudo(id);
+      return success;
+    } catch (err) {
+      console.error('Error in handleDeleteKudo:', err);
+      setStatusMessage({ text: 'An error occurred while deleting the kudo.', type: 'error' });
+      setTimeout(() => setStatusMessage(null), 5000);
+      return false;
+    }
+  };
+
+  // Check if user can delete kudos
+  const canDeleteKudos = hasAdminOrTechLeadPrivileges();
+
+  // Any error to display (from loading kudos or deleting)
+  const error = kudosError || deleteError;
 
   return (
     <div className='container mx-auto px-4 py-8 max-w-7xl'>
@@ -51,6 +90,19 @@ export default function KudoWallPage() {
         </div>
       )}
 
+      {/* Status messages */}
+      {statusMessage && (
+        <div
+          className={`${
+            statusMessage.type === 'success'
+              ? 'bg-green-100 text-green-700 border-green-400'
+              : 'bg-red-100 text-red-700 border-red-400'
+          } border px-4 py-3 rounded mb-6 transition-opacity`}
+        >
+          <p>{statusMessage.text}</p>
+        </div>
+      )}
+
       {/* Filter component */}
       <KudoFilter onFilterChange={handleFilterChange} />
 
@@ -62,7 +114,12 @@ export default function KudoWallPage() {
       )}
 
       {/* Kudos list */}
-      <KudoList kudos={kudos} isLoading={isLoading} emptyMessage='No kudos found matching your filters.' />
+      <KudoList
+        kudos={kudos}
+        isLoading={isLoading || isDeleting}
+        emptyMessage='No kudos found matching your filters.'
+        onDelete={canDeleteKudos ? handleDeleteKudo : undefined}
+      />
     </div>
   );
 }

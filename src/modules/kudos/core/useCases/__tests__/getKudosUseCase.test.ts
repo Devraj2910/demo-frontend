@@ -66,7 +66,14 @@ describe('GetKudosUseCase', () => {
 
   it('should get all kudos when no filters are provided', async () => {
     // Arrange
-    mockKudoService.getAllKudos.mockResolvedValue(mockKudos);
+    const mockApiResponse = {
+      cards: mockKudos,
+      total: mockKudos.length,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+    };
+    mockKudoService.getAllKudos.mockResolvedValue(mockApiResponse);
 
     // Act
     const result = await getKudosUseCase.execute();
@@ -76,14 +83,21 @@ describe('GetKudosUseCase', () => {
     expect(mockKudoService.getFilteredKudos).not.toHaveBeenCalled();
     expect(result).toEqual({
       success: true,
-      data: mockKudos,
+      data: mockApiResponse,
     });
   });
 
   it('should get filtered kudos when filters are provided', async () => {
     // Arrange
     const filters: KudoFilters = { searchTerm: 'test', team: 'Team A' };
-    mockKudoService.getFilteredKudos.mockResolvedValue(mockKudos);
+    const mockApiResponse = {
+      cards: mockKudos,
+      total: mockKudos.length,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+    };
+    mockKudoService.getFilteredKudos.mockResolvedValue(mockApiResponse);
 
     // Act
     const result = await getKudosUseCase.execute(filters);
@@ -93,7 +107,7 @@ describe('GetKudosUseCase', () => {
     expect(mockKudoService.getAllKudos).not.toHaveBeenCalled();
     expect(result).toEqual({
       success: true,
-      data: mockKudos,
+      data: mockApiResponse,
     });
   });
 
