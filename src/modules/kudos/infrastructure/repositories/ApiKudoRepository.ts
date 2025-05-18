@@ -1,41 +1,41 @@
 import axios from 'axios';
-import { KudoRepository } from '../../core/interfaces/repositories/kudoRepository';
+import { KudoRepository, KudoApiResponse } from '../../core/interfaces/repositories/kudoRepository';
 import { Kudo, KudoFilters, CreateKudoRequest } from '../../core/types/kudoTypes';
+import { AuthStorageService } from '@/modules/auth/infrastructure/services/authStorageService';
 
 const API_URL = 'https://demo-hackathon.onrender.com/api';
 
-// Helper function to get auth token from localStorage
-const getAuthHeaders = () => {
-  let token = '';
+/**
+ * Implementation of the KudoRepository interface that connects to the API
+ */
+export class ApiKudoRepository implements KudoRepository {
+  private authStorageService: AuthStorageService;
 
-  // Only access localStorage in browser environment
-  if (typeof window !== 'undefined') {
-    token = localStorage.getItem('auth_token') || '';
+  constructor() {
+    // Get the singleton instance of AuthStorageService
+    this.authStorageService = AuthStorageService.getInstance();
   }
 
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
+  /**
+   * Get auth headers for API requests
+   * @returns Headers with auth token if available
+   */
+  private getAuthHeaders(): Record<string, string> {
+    const token = this.authStorageService.getToken();
 
-// Define the API response type to match what the server returns
-interface KudoApiResponse {
-  cards: Kudo[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+    return {
+      Authorization: token ? `Bearer ${token}` : '',
+      'Content-Type': 'application/json',
+    };
+  }
 
-export class ApiKudoRepository implements KudoRepository {
   /**
    * Get all kudos
    */
   async getAllKudos(): Promise<KudoApiResponse> {
     try {
       const response = await axios.get(`${API_URL}/cards`, {
-        headers: getAuthHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -74,7 +74,7 @@ export class ApiKudoRepository implements KudoRepository {
 
       // Make the API request
       const response = await axios.get(url, {
-        headers: getAuthHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -94,7 +94,7 @@ export class ApiKudoRepository implements KudoRepository {
   async getKudoById(id: string): Promise<Kudo | null> {
     try {
       const response = await axios.get(`${API_URL}/cards/${id}`, {
-        headers: getAuthHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -127,7 +127,7 @@ export class ApiKudoRepository implements KudoRepository {
       };
 
       const response = await axios.post(`${API_URL}/cards`, requestData, {
-        headers: getAuthHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -146,7 +146,9 @@ export class ApiKudoRepository implements KudoRepository {
    */
   async deleteKudo(id: string): Promise<void> {
     try {
-      const response = await axios.delete(`${API_URL}/cards/${id}`);
+      const response = await axios.delete(`${API_URL}/cards/${id}`, {
+        headers: this.getAuthHeaders(),
+      });
 
       if (response.status >= 200 && response.status < 300) {
         return;

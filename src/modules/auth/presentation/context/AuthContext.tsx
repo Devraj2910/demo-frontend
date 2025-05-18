@@ -1,13 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TUser, UserRole, TLoginCredentials, TRegisterData } from '../../core/types/authTypes';
 import { LoginUseCase } from '../../core/useCases/loginUseCase';
 import { RegisterUseCase } from '../../core/useCases/registerUseCase';
 import { GetCurrentUserUseCase } from '../../core/useCases/getCurrentUserUseCase';
 import { AuthService } from '../../core/services/authService';
 import { AuthRepositoryImpl } from '../../infrastructure/repositories/authRepositoryImpl';
-import { getAuthHeaders, getAuthToken } from '../utils/authUtils';
+import { getAuthHeaders } from '../utils/authUtils';
+import { AuthStorageService } from '../../infrastructure/services/authStorageService';
 
 // Role hierarchy for permission checks
 const ROLE_HIERARCHY: Record<UserRole, number> = {
@@ -45,10 +46,11 @@ const setupUseCases = () => {
 };
 
 // Auth provider component
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<TUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const authStorageService = AuthStorageService.getInstance();
 
   // Initialize use cases
   const { loginUseCase, registerUseCase, getCurrentUserUseCase, authService } = setupUseCases();
@@ -60,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUserResponse = await getCurrentUserUseCase.execute();
         if (currentUserResponse) {
           setUser(currentUserResponse);
-          const storedToken = getAuthToken();
+          const storedToken = authStorageService.getToken();
           setToken(storedToken);
         }
       } catch (error) {
@@ -83,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Auth response from login:', authResponse);
       setUser(authResponse);
 
-      const storedToken = getAuthToken();
+      const storedToken = authStorageService.getToken();
       console.log('Stored token:', storedToken);
       setToken(storedToken);
     } catch (error) {

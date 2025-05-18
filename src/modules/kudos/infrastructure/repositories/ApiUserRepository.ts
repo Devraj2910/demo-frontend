@@ -1,23 +1,9 @@
 import axios from 'axios';
 import { UserRepository } from '../../core/interfaces/repositories/userRepository';
 import { User, Team } from '../../core/types/kudoTypes';
+import { AuthStorageService } from '@/modules/auth/infrastructure/services/authStorageService';
 
 const API_URL = 'https://demo-hackathon.onrender.com/api';
-
-// Helper function to get auth token from localStorage
-const getAuthHeaders = () => {
-  let token = '';
-
-  // Only access localStorage in browser environment
-  if (typeof window !== 'undefined') {
-    token = localStorage.getItem('auth_token') || '';
-  }
-
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
 
 // Interface for API responses with nested data structure
 interface ApiResponse<T> {
@@ -31,36 +17,47 @@ interface UsersResponse {
   users: User[];
 }
 
-// Team object as returned by the API
-// This is now redundant since we're using the Team interface from kudoTypes
-// But keeping for compatibility - can be removed later
-interface TeamData {
-  id: number;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
+/**
+ * Repository implementation for user-related data used in the kudos module
+ */
 export class ApiUserRepository implements UserRepository {
+  private authStorageService: AuthStorageService;
+
+  constructor() {
+    // Get the singleton instance of AuthStorageService
+    this.authStorageService = AuthStorageService.getInstance();
+  }
+
+  /**
+   * Get auth headers for API requests
+   * @returns Headers with auth token if available
+   */
+  private getAuthHeaders(): Record<string, string> {
+    const token = this.authStorageService.getToken();
+
+    return {
+      Authorization: token ? `Bearer ${token}` : '',
+      'Content-Type': 'application/json',
+    };
+  }
+
   /**
    * Get all users
+   * @returns Array of users with id, firstName, lastName properties
    */
   async getAllUsers(): Promise<User[]> {
     try {
-      const response = await axios.get<ApiResponse<User[]>>(`${API_URL}/users/search`, {
-        headers: getAuthHeaders(),
+      const response = await axios.get(`${API_URL}/users`, {
+        headers: this.getAuthHeaders(),
       });
 
-      console.log('Get all users response:', response.data);
-
       if (response.status >= 200 && response.status < 300) {
-        // Extract users from nested data structure
-        return response.data.success && response.data.data ? response.data.data : [];
+        return response.data?.data?.users || [];
       } else {
         throw new Error(`Server returned status ${response.status}`);
       }
     } catch (error) {
-      console.error('Error fetching all users:', error);
+      console.error('Error fetching users:', error);
       throw error;
     }
   }
@@ -74,7 +71,7 @@ export class ApiUserRepository implements UserRepository {
       console.log(`Making API request to search users with query: "${query}"`);
       const response = await axios.get(`${API_URL}/users/search`, {
         params: { searchText: query },
-        headers: getAuthHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       console.log('Raw API response status:', response.status);
@@ -147,7 +144,7 @@ export class ApiUserRepository implements UserRepository {
     try {
       // Make API request to get current user
       const response = await axios.get<ApiResponse<User>>(`${API_URL}/users/me`, {
-        headers: getAuthHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       console.log('Get current user response:', response.data);
@@ -187,7 +184,7 @@ export class ApiUserRepository implements UserRepository {
     try {
       // Make API request to get all teams
       const response = await axios.get<ApiResponse<Team[]>>(`${API_URL}/teams`, {
-        headers: getAuthHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       console.log('Get teams response:', response.data);
@@ -221,7 +218,7 @@ export class ApiUserRepository implements UserRepository {
     try {
       // Make API request to get user by ID
       const response = await axios.get<ApiResponse<User>>(`${API_URL}/users/${id}`, {
-        headers: getAuthHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       console.log('Get user by ID response:', response.data);
@@ -239,6 +236,28 @@ export class ApiUserRepository implements UserRepository {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return null;
       }
+      throw error;
+    }
+  }
+
+  /**
+   * Get users by team ID
+   * @param teamId Team ID to filter users
+   * @returns Array of users in the team
+   */
+  async getUsersByTeam(teamId: string): Promise<User[]> {
+    try {
+      const response = await axios.get(`${API_URL}/teams/${teamId}/users`, {
+        headers: this.getAuthHeaders(),
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        return response.data?.data?.users || [];
+      } else {
+        throw new Error(`Server returned status ${response.status}`);
+      }
+    } catch (error) {
+      console.error(`Error fetching users for team ${teamId}:`, error);
       throw error;
     }
   }

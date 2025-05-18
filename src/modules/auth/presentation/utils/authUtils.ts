@@ -1,13 +1,13 @@
+import { AuthStorageService } from '../../infrastructure/services/authStorageService';
+
 /**
  * Utility functions for authentication
  */
 
-// Get auth token from localStorage
+// Get auth token from storage service
 export const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
-  }
-  return null;
+  const authStorageService = AuthStorageService.getInstance();
+  return authStorageService.getToken();
 };
 
 // Create headers with auth token
@@ -40,7 +40,28 @@ export const authFetch = async (url: string, options: RequestInit = {}): Promise
   return fetch(url, fetchOptions);
 };
 
-// Check if the user is authenticated
-export const isAuthenticated = (): boolean => {
-  return !!getAuthToken();
-};
+/**
+ * Utility function to check if user is currently authenticated
+ * @returns boolean indicating authenticated state
+ */
+export function isAuthenticated(): boolean {
+  const authStorageService = AuthStorageService.getInstance();
+  return !!authStorageService.getToken();
+}
+
+/**
+ * Get authenticated user from storage
+ * @returns User object if authenticated, null otherwise
+ */
+export function getAuthenticatedUser() {
+  const authStorageService = AuthStorageService.getInstance();
+  return authStorageService.getUser();
+}
+
+/**
+ * Clear all authentication data from storage
+ */
+export function clearAuthData(): void {
+  const authStorageService = AuthStorageService.getInstance();
+  authStorageService.clearAuthData();
+}

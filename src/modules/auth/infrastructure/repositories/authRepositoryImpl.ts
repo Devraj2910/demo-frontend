@@ -7,7 +7,7 @@ import {
   UserRole,
   TAPIAuthResponse,
 } from '../../core/types/authTypes';
-import { Cookies } from 'react-cookie';
+import { AuthStorageService } from '../services/authStorageService';
 
 const API_BASE_URL = 'https://demo-hackathon.onrender.com/api';
 
@@ -16,35 +16,26 @@ const API_BASE_URL = 'https://demo-hackathon.onrender.com/api';
  * This class handles the actual data access logic
  */
 export class AuthRepositoryImpl implements IAuthRepository {
-  private authUserKey = 'auth_user';
-  private authTokenKey = 'auth_token';
-  private cookies = new Cookies();
+  private authStorageService: AuthStorageService;
+
+  constructor() {
+    // Get the singleton instance of AuthStorageService
+    this.authStorageService = AuthStorageService.getInstance();
+  }
 
   /**
    * Set auth token in both localStorage and cookies
    * @param token The authentication token
    */
   private setAuthToken(token: string): void {
-    // Set in localStorage for client-side access
-    localStorage.setItem(this.authTokenKey, token);
-
-    // Set in cookies for middleware access (7 day expiry)
-    this.cookies.set(this.authTokenKey, token, {
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-      sameSite: 'strict',
-    });
+    this.authStorageService.storeAuthToken(token);
   }
 
   /**
    * Remove auth token from both localStorage and cookies
    */
   private removeAuthToken(): void {
-    // Remove from localStorage
-    localStorage.removeItem(this.authTokenKey);
-
-    // Remove from cookies
-    this.cookies.remove(this.authTokenKey, { path: '/' });
+    this.authStorageService.clearAuthToken();
   }
 
   /**
@@ -100,7 +91,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
       };
 
       // Store user in localStorage
-      localStorage.setItem(this.authUserKey, JSON.stringify(user));
+      this.authStorageService.setUser(user);
 
       // Store token in both localStorage and cookies
       this.setAuthToken(data.data.token);
@@ -156,7 +147,6 @@ export class AuthRepositoryImpl implements IAuthRepository {
         role: this.mapRole(data.role),
         team: data.position || 'Not specified',
       };
-
       return {
         user,
         token: data.token,
@@ -172,11 +162,8 @@ export class AuthRepositoryImpl implements IAuthRepository {
    * Log out the current user
    */
   async logout(): Promise<void> {
-    // Remove user from localStorage
-    localStorage.removeItem(this.authUserKey);
-
-    // Remove token from both localStorage and cookies
-    this.removeAuthToken();
+    // Clear all auth data
+    this.authStorageService.clearAuthData();
   }
 
   /**
@@ -184,21 +171,19 @@ export class AuthRepositoryImpl implements IAuthRepository {
    * @returns Authentication response with user data or null if not authenticated
    */
   async getCurrentUser(): Promise<TAuthResponse | null> {
-    const storedUser = localStorage.getItem(this.authUserKey);
-    const token = localStorage.getItem(this.authTokenKey);
+    const storedUser = this.authStorageService.getUser();
+    const token = this.authStorageService.getToken();
 
     if (storedUser) {
       try {
-        const user: TUser = JSON.parse(storedUser);
         return {
-          user,
+          user: storedUser,
           token: token || undefined,
           status: 200,
         };
       } catch (error) {
         console.error('Failed to parse stored user:', error);
-        localStorage.removeItem(this.authUserKey);
-        this.removeAuthToken();
+        this.authStorageService.clearAuthData();
       }
     }
 
