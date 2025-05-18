@@ -51,7 +51,7 @@ export function useAnalytics() {
     // Only redirect if we're not on a page refresh
     if (!isAuthenticated && !isPageRefresh()) {
       router.push('/');
-    } else if (isAuthenticated && !hasPermission(['admin']) && !isPageRefresh()) {
+    } else if (isAuthenticated && !hasPermission(['admin', 'tech-lead']) && !isPageRefresh()) {
       router.push('/kudowall');
     }
   }, [isAuthenticated, hasPermission, router]);

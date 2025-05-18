@@ -1,5 +1,5 @@
 // User role types
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'tech-lead' | 'user';
 
 // Login credentials type
 export type TLoginCredentials = {
