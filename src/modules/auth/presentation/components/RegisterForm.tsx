@@ -151,6 +151,7 @@ export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin
           {...register('role', { required: 'Role is required' })}
         >
           <option value='user'>User</option>
+          <option value='tech-lead'>Tech Lead</option>
           <option value='admin'>Admin</option>
         </select>
         {errors.role && <p className='mt-1 text-sm text-auth-error'>{errors.role.message}</p>}

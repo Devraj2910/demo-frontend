@@ -143,7 +143,11 @@ export default function NavigationBar() {
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-gray-700'>{user?.name}</span>
                     <span className='text-xs text-gray-400'>
-                      {user?.role === 'admin' ? 'Administrator' : 'Team Member'}
+                      {user?.role === 'admin'
+                        ? 'Administrator'
+                        : user?.role === 'tech-lead'
+                        ? 'Tech Lead'
+                        : 'Team Member'}
                     </span>
                   </div>
                 </div>
@@ -164,8 +168,8 @@ export default function NavigationBar() {
                     Logout
                   </button>
 
-                  {/* Only Admin can create kudos and button is hidden on Kudos Wall page */}
-                  {user?.role === 'admin' && !isKudosWallPage && (
+                  {/* Only Admin and Tech Lead can create kudos and button is hidden on Kudos Wall page */}
+                  {(user?.role === 'admin' || user?.role === 'tech-lead') && !isKudosWallPage && (
                     <Link
                       href='/kudowall'
                       className='bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center shadow-md hover:shadow-lg'

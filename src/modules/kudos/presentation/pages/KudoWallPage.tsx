@@ -5,6 +5,7 @@ import KudoFilter from '../components/KudoFilter';
 import KudoForm from '../components/KudoForm';
 import { useKudos } from '../hooks/useKudos';
 import { KudoFilters } from '../../core/types/kudoTypes';
+import { hasAdminOrTechLeadPrivileges } from '@/modules/auth/presentation/utils/authUtils';
 
 export default function KudoWallPage() {
   // State for controlling form visibility
@@ -29,25 +30,23 @@ export default function KudoWallPage() {
     filterKudos(filters);
   };
 
-  console.log(kudos);
-
   return (
     <div className='container mx-auto px-4 py-8 max-w-7xl'>
       <div className='flex justify-between items-center mb-8'>
         <h1 className='text-3xl font-bold text-gray-800'>Kudos Wall</h1>
-
-        <button
-          onClick={toggleForm}
-          className='px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'
-        >
-          {isFormVisible ? 'Cancel' : 'Give Kudos'}
-        </button>
+        {hasAdminOrTechLeadPrivileges() && (
+          <button
+            onClick={toggleForm}
+            className='px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'
+          >
+            {isFormVisible ? 'Cancel' : 'Give Kudos'}
+          </button>
+        )}
       </div>
 
       {/* Show form when isFormVisible is true */}
       {isFormVisible && (
         <div className='mb-8'>
-          {' '}
           <KudoForm onSuccess={handleFormSuccess} onCancel={toggleForm} />{' '}
         </div>
       )}

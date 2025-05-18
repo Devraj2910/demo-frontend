@@ -1,4 +1,5 @@
 import { AuthStorageService } from '../../infrastructure/services/authStorageService';
+import { UserRole } from '../../core/types/authTypes';
 
 /**
  * Utility functions for authentication
@@ -56,6 +57,25 @@ export function isAuthenticated(): boolean {
 export function getAuthenticatedUser() {
   const authStorageService = AuthStorageService.getInstance();
   return authStorageService.getUser();
+}
+
+/**
+ * Get user role from cookies
+ * @returns User role if found in cookies, null otherwise
+ */
+export function getUserRole(): UserRole | null {
+  const authStorageService = AuthStorageService.getInstance();
+  const roleCookie = authStorageService.getCookie('user_role');
+  return roleCookie as UserRole | null;
+}
+
+/**
+ * Check if user has admin or tech-lead privileges
+ * @returns boolean indicating if the user has sufficient privileges
+ */
+export function hasAdminOrTechLeadPrivileges(): boolean {
+  const role = getUserRole();
+  return role === 'admin' || role === 'tech-lead';
 }
 
 /**

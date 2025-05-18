@@ -12,7 +12,8 @@ import { AuthStorageService } from '../../infrastructure/services/authStorageSer
 
 // Role hierarchy for permission checks
 const ROLE_HIERARCHY: Record<UserRole, number> = {
-  admin: 2,
+  admin: 3,
+  'tech-lead': 2,
   user: 1,
 };
 
