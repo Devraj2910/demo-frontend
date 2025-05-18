@@ -41,7 +41,12 @@ export const useKudos = (initialFilters?: KudoFilters, getKudosUseCase = default
   const [kudos, setKudos] = useState<Kudo[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<KudoFilters | undefined>(initialFilters);
+  const [filters, setFilters] = useState<KudoFilters | undefined>(
+    initialFilters || {
+      page: 1,
+      limit: 9, // Default to 9 items per page
+    }
+  );
   const [pagination, setPagination] = useState<PaginationData | null>(null);
 
   // Function to load kudos with current filters
@@ -53,15 +58,13 @@ export const useKudos = (initialFilters?: KudoFilters, getKudosUseCase = default
       const result = await getKudosUseCase.execute(filters);
 
       if (result.success && result.data) {
-        console.log('API Response:', result.data);
         setKudos(result.data.cards);
-        console.log(result.data.cards);
 
         // Extract pagination data
         setPagination({
           total: result.data.total || 0,
           page: result.data.page || 1,
-          limit: result.data.limit || 20,
+          limit: result.data.limit || 9,
           totalPages: result.data.totalPages || 1,
         });
       } else {
@@ -91,28 +94,49 @@ export const useKudos = (initialFilters?: KudoFilters, getKudosUseCase = default
 
   // Function to apply new filters
   const filterKudos = useCallback((newFilters: KudoFilters) => {
-    setFilters(newFilters);
+    // Ensure pagination params are included
+    const updatedFilters = {
+      ...newFilters,
+      page: newFilters.page || 1,
+      limit: newFilters.limit || 9,
+    };
+    setFilters(updatedFilters);
   }, []);
 
   // Function to delete a kudo
-  const deleteKudo = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      const result = await deleteKudoUseCase.execute(id);
+  const deleteKudo = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        const result = await deleteKudoUseCase.execute(id);
 
-      if (result.success) {
-        // Optimistically update the UI by removing the deleted kudo
-        setKudos((prevKudos) => prevKudos.filter((kudo) => kudo.id !== id));
-        return true;
-      } else {
-        setError(result.error || 'Failed to delete kudo');
+        if (result.success) {
+          // Optimistically update the UI by removing the deleted kudo
+          setKudos((prevKudos) => prevKudos.filter((kudo) => kudo.id !== id));
+
+          // If we've deleted the last item on a page, go back a page (except on page 1)
+          if (kudos.length === 1 && pagination && pagination.page > 1) {
+            filterKudos({
+              ...filters,
+              page: pagination.page - 1,
+            });
+          } else {
+            // Otherwise just refresh the current page
+            refreshKudos();
+          }
+
+          return true;
+        } else {
+          setError(result.error || 'Failed to delete kudo');
+          return false;
+        }
+      } catch (err) {
+        console.error('Error deleting kudo:', err);
+        setError('An unexpected error occurred while deleting the kudo');
         return false;
       }
-    } catch (err) {
-      console.error('Error deleting kudo:', err);
-      setError('An unexpected error occurred while deleting the kudo');
-      return false;
-    }
-  }, []);
+    },
+    [filters, kudos.length, pagination, refreshKudos, filterKudos]
+  );
 
   return {
     kudos,

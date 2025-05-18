@@ -34,7 +34,8 @@ export class ApiKudoRepository implements KudoRepository {
    */
   async getAllKudos(): Promise<KudoApiResponse> {
     try {
-      const response = await axios.get(`${API_URL}/cards`, {
+      // Default to first page with 9 items per page
+      const response = await axios.get(`${API_URL}/cards?page=1&limit=9`, {
         headers: this.getAuthHeaders(),
       });
 
@@ -68,6 +69,10 @@ export class ApiKudoRepository implements KudoRepository {
       if (filters.team) {
         queryParams.append('teamId', filters.team);
       }
+
+      // Add pagination parameters with defaults
+      queryParams.append('page', String(filters.page || 1));
+      queryParams.append('limit', String(filters.limit || 9)); // Default to 9 items per page
 
       // Build URL with query parameters
       const url = `${API_URL}/cards${queryParams.toString() ? '?' + queryParams.toString() : ''}`;

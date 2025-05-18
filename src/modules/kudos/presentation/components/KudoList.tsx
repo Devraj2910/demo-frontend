@@ -73,7 +73,7 @@ export default function KudoList({
   // Show kudos grid - ensure kudos is an array before mapping
   return (
     <>
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
         {Array.isArray(kudos) &&
           kudos.map((kudo) => (
             <div key={kudo.id} className='flex'>

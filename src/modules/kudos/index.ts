@@ -26,3 +26,5 @@ export { default as KudoForm } from './presentation/components/KudoForm';
 export { default as KudoList } from './presentation/components/KudoList';
 export { default as KudoFilter } from './presentation/components/KudoFilter';
 export { default as ConfirmationModal } from './presentation/components/ConfirmationModal';
+export { default as Pagination } from './presentation/components/Pagination';
+export { default as KudoDetailModal } from './presentation/components/KudoDetailModal';
