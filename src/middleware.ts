@@ -7,20 +7,28 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Define protected routes that require authentication
-  const protectedRoutes = ['/kudowall', '/analytics', '/admin', '/reports', '/profile'];
+  const protectedRoutes = ['/kudowall', '/analytics', '/profile'];
 
-  // Define public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/register'];
+  // Define admin-only routes
+  const adminRoutes = ['/admin'];
 
   // Check if the current path is a protected route
   const isProtectedRoute = protectedRoutes.some((route) => path === route || path.startsWith(`${route}/`));
 
-  // Get auth token from cookies (cookies are accessible in middleware)
+  // Check if the current path is an admin route
+  const isAdminRoute = adminRoutes.some((route) => path === route || path.startsWith(`${route}/`));
+
+  // Get auth token and user role from cookies (cookies are accessible in middleware)
   const authToken = request.cookies.get('auth_token')?.value;
+  const userRole = request.cookies.get('user_role')?.value;
 
   // If it's a protected route and there's no token, redirect to home page
-  if (isProtectedRoute && !authToken) {
-    console.log(`Unauthorized access attempt to ${path}, redirecting to home`);
+  if ((isProtectedRoute || isAdminRoute) && !authToken) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // If it's an admin route and user is not an admin, redirect to home page
+  if (isAdminRoute && userRole !== 'admin') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 

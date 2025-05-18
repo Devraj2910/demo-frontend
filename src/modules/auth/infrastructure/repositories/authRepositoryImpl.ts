@@ -17,6 +17,7 @@ const API_BASE_URL = 'https://demo-hackathon.onrender.com/api';
  */
 export class AuthRepositoryImpl implements IAuthRepository {
   private authStorageService: AuthStorageService;
+  private userRoleKey: string = 'user_role';
 
   constructor() {
     // Get the singleton instance of AuthStorageService
@@ -36,6 +37,25 @@ export class AuthRepositoryImpl implements IAuthRepository {
    */
   private removeAuthToken(): void {
     this.authStorageService.clearAuthToken();
+  }
+
+  /**
+   * Set user role in cookies
+   * @param role The user role
+   */
+  private setUserRoleCookie(role: UserRole): void {
+    this.authStorageService.setCookie(this.userRoleKey, role, {
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      sameSite: 'strict',
+    });
+  }
+
+  /**
+   * Remove user role from cookies
+   */
+  private removeUserRoleCookie(): void {
+    this.authStorageService.removeCookie(this.userRoleKey, { path: '/' });
   }
 
   /**
@@ -96,6 +116,9 @@ export class AuthRepositoryImpl implements IAuthRepository {
       // Store token in both localStorage and cookies
       this.setAuthToken(data.data.token);
 
+      // Store user role in cookies
+      this.setUserRoleCookie(user.role);
+
       return {
         user,
         token: data.data.token,
@@ -147,6 +170,16 @@ export class AuthRepositoryImpl implements IAuthRepository {
         role: this.mapRole(data.role),
         team: data.position || 'Not specified',
       };
+
+      // Store user in localStorage
+      this.authStorageService.setUser(user);
+
+      // Store token in both localStorage and cookies
+      this.setAuthToken(data.token);
+
+      // Store user role in cookies
+      this.setUserRoleCookie(user.role);
+
       return {
         user,
         token: data.token,
@@ -164,6 +197,9 @@ export class AuthRepositoryImpl implements IAuthRepository {
   async logout(): Promise<void> {
     // Clear all auth data
     this.authStorageService.clearAuthData();
+
+    // Remove user role from cookies
+    this.removeUserRoleCookie();
   }
 
   /**
@@ -184,6 +220,9 @@ export class AuthRepositoryImpl implements IAuthRepository {
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         this.authStorageService.clearAuthData();
+
+        // Clear user role cookie as well
+        this.removeUserRoleCookie();
       }
     }
 
