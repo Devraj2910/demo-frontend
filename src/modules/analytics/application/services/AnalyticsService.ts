@@ -1,103 +1,143 @@
 import { AnalyticsRepository } from '../../domain/repositories/AnalyticsRepository';
 import {
-  TeamKudos,
-  UserKudos,
-  CategoryDistribution,
-  TrendData,
-  WeeklyActivity,
+  AnalyticsDashboardData,
   AnalyticsSummary,
   TimePeriod,
+  AnalyticsFilters,
 } from '../../domain/entities/AnalyticsData';
+import { IAnalyticsService } from '../../core/interfaces/AnalyticsService';
 
 /**
  * Analytics Service
  * Orchestrates the operations related to analytics
  */
-export class AnalyticsService {
+export class AnalyticsService implements IAnalyticsService {
   constructor(private repository: AnalyticsRepository) {}
 
   /**
-   * Get all analytics data for the dashboard
+   * Get all analytics data for the dashboard based on time period
    * @param period Time period for the analytics
+   * @returns Complete dashboard data and calculated summary
    */
-  async getDashboardData(period: TimePeriod) {
-    // Fetch data in parallel for better performance
-    const [summary, teamData, categoryData, trendData, weeklyActivity, topReceivers, topGivers] = await Promise.all([
-      this.repository.getAnalyticsSummary(period),
-      this.repository.getTeamKudosData(period),
-      this.repository.getCategoryDistribution(period),
-      this.repository.getTrendData(period),
-      this.repository.getWeeklyActivity(period),
-      this.repository.getTopReceivers(period),
-      this.repository.getTopGivers(period),
-    ]);
+  async getDashboardData(period: TimePeriod): Promise<{
+    dashboardData: AnalyticsDashboardData;
+    summary: AnalyticsSummary;
+  }> {
+    try {
+      // Convert time period to date range
+      const dateRange = this.repository.getDateRangeFromPeriod(period);
 
-    return {
-      summary,
-      teamData,
-      categoryData,
-      trendData,
-      weeklyActivity,
-      topReceivers,
-      topGivers,
-    };
+      // Fetch dashboard data
+      const dashboardData = await this.repository.getDashboardData(dateRange);
+
+      // Calculate summary statistics
+      const summary = this.repository.calculateSummary(dashboardData);
+
+      return {
+        dashboardData,
+        summary,
+      };
+    } catch (error) {
+      console.error('Error in analytics service:', error);
+      throw error;
+    }
   }
 
   /**
-   * Get summary analytics data
-   * @param period Time period for the analytics
+   * Get analytics data with custom date filters
+   * @param filters Custom date filters
+   * @returns Complete dashboard data and calculated summary
    */
-  async getSummary(period: TimePeriod): Promise<AnalyticsSummary> {
-    return this.repository.getAnalyticsSummary(period);
+  async getCustomRangeData(filters: AnalyticsFilters): Promise<{
+    dashboardData: AnalyticsDashboardData;
+    summary: AnalyticsSummary;
+  }> {
+    try {
+      // Fetch dashboard data with custom filters
+      const dashboardData = await this.repository.getDashboardData(filters);
+
+      // Calculate summary statistics
+      const summary = this.repository.calculateSummary(dashboardData);
+
+      return {
+        dashboardData,
+        summary,
+      };
+    } catch (error) {
+      console.error('Error in analytics service:', error);
+      throw error;
+    }
   }
 
   /**
-   * Get team kudos data
-   * @param period Time period for the analytics
+   * Export analytics data to a specified format
+   * @param data Dashboard data to export
+   * @param format Export format (e.g., 'csv', 'pdf', 'excel')
+   * @returns URL or Blob of the exported file
    */
-  async getTeamData(period: TimePeriod): Promise<TeamKudos[]> {
-    return this.repository.getTeamKudosData(period);
+  async exportData(data: AnalyticsDashboardData, format: 'csv' | 'pdf' | 'excel'): Promise<string | Blob> {
+    try {
+      // Implementation would depend on the export libraries used
+      // This is a placeholder for the actual implementation
+
+      switch (format) {
+        case 'csv':
+          return this.exportToCsv(data);
+        case 'pdf':
+          return this.exportToPdf(data);
+        case 'excel':
+          return this.exportToExcel(data);
+        default:
+          throw new Error(`Unsupported export format: ${format}`);
+      }
+    } catch (error) {
+      console.error(`Error exporting data to ${format}:`, error);
+      throw error;
+    }
   }
 
   /**
-   * Get category distribution data
-   * @param period Time period for the analytics
+   * Export data to CSV format
+   * @param data The data to export
+   * @returns Blob containing the CSV data
    */
-  async getCategoryData(period: TimePeriod): Promise<CategoryDistribution[]> {
-    return this.repository.getCategoryDistribution(period);
+  private exportToCsv(data: AnalyticsDashboardData): Blob {
+    // Convert data to CSV format
+    // This is a simple implementation that could be enhanced
+
+    const headers = ['Team', 'Cards Count'];
+    const rows = data.teamAnalytics.map((team) => [team.name, team.cardCount.toString()]);
+
+    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+
+    return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   }
 
   /**
-   * Get trend data over time
-   * @param period Time period for the analytics
+   * Export data to PDF format
+   * @param data The data to export
+   * @returns Blob containing the PDF data
    */
-  async getTrendData(period: TimePeriod): Promise<TrendData[]> {
-    return this.repository.getTrendData(period);
+  private exportToPdf(data: AnalyticsDashboardData): Promise<Blob> {
+    // In a real implementation, you would use a PDF generation library
+    // This is just a placeholder
+
+    return Promise.resolve(new Blob(['PDF content would go here'], { type: 'application/pdf' }));
   }
 
   /**
-   * Get weekly activity data
-   * @param period Time period for the analytics
+   * Export data to Excel format
+   * @param data The data to export
+   * @returns Blob containing the Excel data
    */
-  async getWeeklyActivityData(period: TimePeriod): Promise<WeeklyActivity[]> {
-    return this.repository.getWeeklyActivity(period);
-  }
+  private exportToExcel(data: AnalyticsDashboardData): Promise<Blob> {
+    // In a real implementation, you would use an Excel generation library
+    // This is just a placeholder
 
-  /**
-   * Get top users who received kudos
-   * @param period Time period for the analytics
-   * @param limit Maximum number of users to return
-   */
-  async getTopReceivers(period: TimePeriod, limit?: number): Promise<UserKudos[]> {
-    return this.repository.getTopReceivers(period, limit);
-  }
-
-  /**
-   * Get top users who gave kudos
-   * @param period Time period for the analytics
-   * @param limit Maximum number of users to return
-   */
-  async getTopGivers(period: TimePeriod, limit?: number): Promise<UserKudos[]> {
-    return this.repository.getTopGivers(period, limit);
+    return Promise.resolve(
+      new Blob(['Excel content would go here'], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+    );
   }
 }
