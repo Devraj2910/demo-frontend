@@ -6,6 +6,7 @@ import { useAuth } from '@/modules/auth';
 import { TRegisterData, UserRole } from '@/modules/auth';
 import LoginForm from '@/modules/auth/presentation/components/LoginForm';
 import RegisterForm from '@/modules/auth/presentation/components/RegisterForm';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function HomePage() {
   const { isAuthenticated, login, register: registerUser } = useAuth();
@@ -30,6 +31,11 @@ export default function HomePage() {
       router.push('/kudowall');
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
+      // Show error toast for login failures
+      toast.error(err.message || 'Invalid email or password', {
+        duration: 5000,
+        position: 'top-center',
+      });
     } finally {
       setLoading(false);
     }
@@ -39,14 +45,13 @@ export default function HomePage() {
     name: string;
     email: string;
     password: string;
-    confirmPassword: string;
     team: string;
     role: UserRole;
   }) => {
     setError('');
+    setLoading(true);
 
     // The password validation is now handled by the form component
-    setLoading(true);
 
     try {
       const userData: TRegisterData = {
@@ -58,20 +63,52 @@ export default function HomePage() {
       };
 
       await registerUser(userData);
-      router.push('/kudowall');
+      // Show success toast instead of setting message state
+      toast.success('Registration successful! You can now log in with your credentials.', {
+        duration: 5000,
+        position: 'top-center',
+        style: {
+          background: '#10B981',
+          color: '#fff',
+          padding: '16px',
+          borderRadius: '10px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#10B981',
+        },
+      });
+      // Switch to login tab after successful registration
+      setActiveTab('login');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
+      // Show error toast
+      toast.error(err.message || 'Registration failed. Please try again.', {
+        duration: 5000,
+        position: 'top-center',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   // Switch between login and register forms
-  const switchToLogin = () => setActiveTab('login');
-  const switchToRegister = () => setActiveTab('register');
+  const switchToLogin = () => {
+    setActiveTab('login');
+    // Clear messages when switching tabs
+    setError('');
+  };
+
+  const switchToRegister = () => {
+    setActiveTab('register');
+    // Clear messages when switching tabs
+    setError('');
+  };
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-indigo-50 to-white'>
+      {/* Add Toaster component to render notifications */}
+      <Toaster />
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24'>
         <div className='text-center mb-16'>
           <h1 className='text-4xl md:text-6xl font-bold text-gray-900 mb-6'>

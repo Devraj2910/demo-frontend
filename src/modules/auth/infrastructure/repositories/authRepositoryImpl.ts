@@ -48,13 +48,32 @@ export class AuthRepositoryImpl implements IAuthRepository {
   }
 
   /**
+   * Fetch with 401 handling
+   */
+  private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+    const response = await fetch(url, options);
+
+    // Handle unauthorized responses (401)
+    if (response.status === 401) {
+      console.log('Unauthorized response detected in AuthRepository. Logging out and redirecting...');
+      // Simple redirect to login page
+      if (typeof window !== 'undefined') {
+        this.logout(); // Clear any stored user/token
+        window.location.href = '/';
+      }
+    }
+
+    return response;
+  }
+
+  /**
    * Authenticate a user with email and password
    * @param credentials Login credentials
    * @returns Authentication response with user data
    */
   async login(credentials: TLoginCredentials): Promise<TAuthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await this.fetchWithAuth(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +123,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
    */
   async register(userData: TRegisterData): Promise<TAuthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await this.fetchWithAuth(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,8 +133,9 @@ export class AuthRepositoryImpl implements IAuthRepository {
           password: userData.password,
           firstName: userData.name, // API expects firstName
           lastName: '',
-          role: userData.role || 'team_member',
-          position: userData.team || 'Not specified',
+          role: userData.role || 'user',
+          position: userData.team || 'Not specified', // Now will be the team ID
+          teamId: userData.team, // Adding teamId explicitly
         }),
       });
 
@@ -198,9 +218,15 @@ export class AuthRepositoryImpl implements IAuthRepository {
    */
   private mapRole(apiRole: string): UserRole {
     // Handle different role formats from the API
-    if (apiRole === 'admin') {
-      return 'admin';
+    switch (apiRole?.toLowerCase()) {
+      case 'admin':
+        return 'admin';
+      case 'moderator':
+      case 'team_lead':
+      case 'team_member':
+      case 'user':
+      default:
+        return 'user';
     }
-    return 'team_member';
   }
 }

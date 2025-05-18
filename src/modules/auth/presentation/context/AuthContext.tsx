@@ -12,7 +12,7 @@ import { getAuthHeaders, getAuthToken } from '../utils/authUtils';
 // Role hierarchy for permission checks
 const ROLE_HIERARCHY: Record<UserRole, number> = {
   admin: 2,
-  team_member: 1,
+  user: 1,
 };
 
 // Auth context type
@@ -99,13 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     try {
-      const authResponse = await registerUseCase.execute(userData);
-      console.log('Auth response from register:', authResponse);
-      setUser(authResponse);
-
-      const storedToken = getAuthToken();
-      console.log('Stored token:', storedToken);
-      setToken(storedToken);
+      await registerUseCase.execute(userData);
     } catch (error) {
       console.error('Registration error:', error);
       throw error;

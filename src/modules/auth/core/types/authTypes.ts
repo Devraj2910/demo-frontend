@@ -1,10 +1,24 @@
 // User role types
-export type UserRole = 'admin' | 'team_member';
+export type UserRole = 'admin' | 'user';
 
 // Login credentials type
 export type TLoginCredentials = {
   email: string;
   password: string;
+};
+
+// Team type
+export type TTeam = {
+  id: number;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// Team response type
+export type TTeamResponse = {
+  success: boolean;
+  data: TTeam[];
 };
 
 // Registration data type

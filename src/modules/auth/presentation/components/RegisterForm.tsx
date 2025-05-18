@@ -3,18 +3,12 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { UserRole } from '../../core/types/authTypes';
+import { useTeams } from '../hooks/useTeams';
 
 interface RegisterFormProps {
   loading: boolean;
   error: string;
-  onSubmit: (data: {
-    name: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    team: string;
-    role: UserRole;
-  }) => void;
+  onSubmit: (data: { name: string; email: string; password: string; team: string; role: UserRole }) => void;
   onSwitchToLogin: () => void;
 }
 
@@ -32,6 +26,9 @@ type RegisterFormValues = {
  * Using React Hook Form
  */
 export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: RegisterFormProps) {
+  // Fetch teams data using custom hook
+  const { teams, loading: teamsLoading, error: teamsError } = useTeams();
+
   const {
     register,
     handleSubmit,
@@ -42,9 +39,8 @@ export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin
       name: '',
       email: '',
       password: '',
-      confirmPassword: '',
-      team: 'Alpha',
-      role: 'team_member' as UserRole,
+      team: '', // Empty default value, will be populated from dropdown
+      role: 'user' as UserRole,
     },
   });
 
@@ -114,15 +110,23 @@ export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin
         <label htmlFor='team' className='block text-sm font-medium text-gray-700 mb-1'>
           Team
         </label>
-        <input
+        <select
           id='team'
-          type='text'
           className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
             errors.team ? 'border-auth-error' : 'border-auth-border'
           }`}
-          placeholder='Developer, Manager, etc.'
           {...register('team', { required: 'Team is required' })}
-        />
+          disabled={teamsLoading}
+        >
+          <option value=''>Select your team</option>
+          {teams.map((team) => (
+            <option key={team.id} value={team.id.toString()}>
+              {team.name}
+            </option>
+          ))}
+        </select>
+        {teamsLoading && <p className='mt-1 text-xs text-gray-500'>Loading teams...</p>}
+        {teamsError && <p className='mt-1 text-xs text-auth-error'>Failed to load teams. Please try again.</p>}
         {errors.team && <p className='mt-1 text-sm text-auth-error'>{errors.team.message}</p>}
       </div>
 
@@ -137,7 +141,7 @@ export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin
           }`}
           {...register('role', { required: 'Role is required' })}
         >
-          <option value='team_member'>User</option>
+          <option value='user'>User</option>
           <option value='admin'>Admin</option>
         </select>
         {errors.role && <p className='mt-1 text-sm text-auth-error'>{errors.role.message}</p>}
@@ -166,30 +170,11 @@ export default function RegisterForm({ loading, error, onSubmit, onSwitchToLogin
       </div>
 
       <div className='mb-6'>
-        <label htmlFor='confirmPassword' className='block text-sm font-medium text-gray-700 mb-1'>
-          Confirm Password
-        </label>
-        <input
-          id='confirmPassword'
-          type='password'
-          className={`w-full px-3 py-2.5 border rounded-auth-input shadow-sm focus:ring-auth-primary focus:border-auth-primary transition-colors ${
-            errors.confirmPassword ? 'border-auth-error' : 'border-auth-border'
-          }`}
-          placeholder='Confirm your password'
-          {...register('confirmPassword', {
-            required: 'Please confirm your password',
-            validate: (value: string) => value === password || 'Passwords do not match',
-          })}
-        />
-        {errors.confirmPassword && <p className='mt-1 text-sm text-auth-error'>{errors.confirmPassword.message}</p>}
-      </div>
-
-      <div className='mb-6'>
         <button
           type='submit'
-          disabled={loading}
+          disabled={loading || teamsLoading}
           className={`w-full py-3 px-4 border border-transparent rounded-auth-button shadow-md text-sm font-medium text-white transition-colors ${
-            loading ? 'bg-auth-secondary' : 'bg-auth-primary hover:bg-auth-highlight'
+            loading || teamsLoading ? 'bg-auth-secondary' : 'bg-auth-primary hover:bg-auth-highlight'
           } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-auth-primary`}
         >
           {loading ? (
