@@ -171,15 +171,6 @@ export class AuthRepositoryImpl implements IAuthRepository {
         team: data.position || 'Not specified',
       };
 
-      // Store user in localStorage
-      this.authStorageService.setUser(user);
-
-      // Store token in both localStorage and cookies
-      this.setAuthToken(data.token);
-
-      // Store user role in cookies
-      this.setUserRoleCookie(user.role);
-
       return {
         user,
         token: data.token,
