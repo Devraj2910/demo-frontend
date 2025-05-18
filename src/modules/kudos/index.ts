@@ -17,6 +17,7 @@ export * from './infrastructure/repositories/mockUserRepository';
 export * from './presentation/hooks/useKudos';
 export * from './presentation/hooks/useKudoForm';
 export * from './presentation/hooks/useUsers';
+export * from './presentation/hooks/useKudoDeletion';
 
 // Export presentation components
 export { default as KudoWallPage } from './presentation/pages/KudoWallPage';
@@ -24,3 +25,4 @@ export { default as KudoCard } from './presentation/components/KudoCard';
 export { default as KudoForm } from './presentation/components/KudoForm';
 export { default as KudoList } from './presentation/components/KudoList';
 export { default as KudoFilter } from './presentation/components/KudoFilter';
+export { default as ConfirmationModal } from './presentation/components/ConfirmationModal';

@@ -47,6 +47,21 @@ export class KudoService {
   }
 
   /**
+   * Delete a kudo by ID
+   * @param id Kudo ID to delete
+   */
+  async deleteKudo(id: string): Promise<void> {
+    // Get current user to verify authorization if needed
+    const currentUser = await this.userRepository.getCurrentUser();
+
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    return this.kudoRepository.deleteKudo(id);
+  }
+
+  /**
    * Get available teams
    */
   async getTeams(): Promise<Team[]> {

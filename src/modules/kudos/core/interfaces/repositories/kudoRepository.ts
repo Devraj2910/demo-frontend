@@ -36,4 +36,10 @@ export interface KudoRepository {
    * @param senderId ID of the sender
    */
   createKudo(data: CreateKudoRequest, senderId: string): Promise<Kudo>;
+
+  /**
+   * Delete a kudo by ID
+   * @param id Kudo ID
+   */
+  deleteKudo(id: string): Promise<void>;
 }

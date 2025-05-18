@@ -3,3 +3,4 @@ export * from './createKudoUseCase';
 export * from './getCurrentUserUseCase';
 export * from './getTeamsUseCase';
 export * from './searchUsersUseCase';
+export * from './deleteKudoUseCase';

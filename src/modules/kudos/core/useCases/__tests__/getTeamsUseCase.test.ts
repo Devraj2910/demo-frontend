@@ -2,6 +2,7 @@ import { GetTeamsUseCase } from '../getTeamsUseCase';
 import { KudoService } from '../../services/kudoService';
 import { KudoRepository } from '../../interfaces/repositories/kudoRepository';
 import { UserRepository } from '../../interfaces/repositories/userRepository';
+import { Team } from '../../types/kudoTypes';
 
 // Create mock repositories
 const mockKudoRepository = {} as jest.Mocked<KudoRepository>;
@@ -37,7 +38,12 @@ describe('GetTeamsUseCase', () => {
   });
 
   // Mock teams for testing
-  const mockTeams = ['Engineering', 'Design', 'Marketing', 'Product'];
+  const mockTeams: Team[] = [
+    { id: 1, name: 'Engineering', createdAt: '2023-01-01', updatedAt: '2023-01-01' },
+    { id: 2, name: 'Design', createdAt: '2023-01-01', updatedAt: '2023-01-01' },
+    { id: 3, name: 'Marketing', createdAt: '2023-01-01', updatedAt: '2023-01-01' },
+    { id: 4, name: 'Product', createdAt: '2023-01-01', updatedAt: '2023-01-01' },
+  ];
 
   it('should get teams successfully', async () => {
     // Arrange
