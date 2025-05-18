@@ -32,7 +32,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <AuthProvider>
       {!isHomePage && <NavigationBar />}
-      <main>{children}</main>
+      <main className='mt-16'>{children}</main>
     </AuthProvider>
   );
 }
