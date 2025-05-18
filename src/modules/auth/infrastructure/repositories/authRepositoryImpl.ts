@@ -157,12 +157,6 @@ export class AuthRepositoryImpl implements IAuthRepository {
         team: data.position || 'Not specified',
       };
 
-      // Store user in localStorage
-      localStorage.setItem(this.authUserKey, JSON.stringify(user));
-
-      // Store token in both localStorage and cookies
-      this.setAuthToken(data.token);
-
       return {
         user,
         token: data.token,
