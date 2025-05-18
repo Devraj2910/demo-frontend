@@ -2,7 +2,9 @@
 import React, { useState } from 'react';
 import { Kudo } from '../../core/types/kudoTypes';
 import KudoCard from './KudoCard';
-import ConfirmationModal from './ConfirmationModal';
+import dynamic from 'next/dynamic';
+
+const ConfirmationModal = dynamic(() => import('./ConfirmationModal'), { ssr: false });
 
 interface KudoListProps {
   kudos: Kudo[] | null;
