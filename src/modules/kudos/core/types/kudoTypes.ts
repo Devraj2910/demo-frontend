@@ -34,6 +34,8 @@ export interface KudoFilters {
   searchTerm?: string;
   team?: string;
   category?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface CreateKudoRequest {

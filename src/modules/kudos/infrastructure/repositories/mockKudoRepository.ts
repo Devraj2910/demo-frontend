@@ -1,4 +1,4 @@
-import { KudoRepository } from '../../core/interfaces/repositories/kudoRepository';
+import { KudoRepository, KudoApiResponse } from '../../core/interfaces/repositories/kudoRepository';
 import { Kudo, KudoFilters, CreateKudoRequest } from '../../core/types/kudoTypes';
 import { MockUserRepository } from './mockUserRepository';
 
@@ -131,19 +131,41 @@ export class MockKudoRepository implements KudoRepository {
   }
 
   /**
+   * Wrap kudos array in KudoApiResponse format
+   * @param kudos Array of kudos to wrap
+   * @param page Current page number
+   * @param limit Items per page
+   */
+  private wrapInApiResponse(kudos: Kudo[], page: number = 1, limit: number = 10): KudoApiResponse {
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedKudos = kudos.slice(startIndex, endIndex);
+
+    return {
+      cards: paginatedKudos,
+      total: kudos.length,
+      page,
+      limit,
+      totalPages: Math.ceil(kudos.length / limit),
+    };
+  }
+
+  /**
    * Get all kudos
    */
-  async getAllKudos(): Promise<Kudo[]> {
-    return this.mockApiCall(
-      [...this.kudos].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  async getAllKudos(): Promise<KudoApiResponse> {
+    const sortedKudos = [...this.kudos].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+
+    return this.mockApiCall(this.wrapInApiResponse(sortedKudos));
   }
 
   /**
    * Get kudos with filters applied
    * @param filters Filters to apply
    */
-  async getFilteredKudos(filters: KudoFilters): Promise<Kudo[]> {
+  async getFilteredKudos(filters: KudoFilters): Promise<KudoApiResponse> {
     let result = [...this.kudos];
 
     // Apply search filter
@@ -171,7 +193,11 @@ export class MockKudoRepository implements KudoRepository {
     // Sort by date (newest first)
     result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return this.mockApiCall(result);
+    // Apply pagination if provided
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+
+    return this.mockApiCall(this.wrapInApiResponse(result, page, limit));
   }
 
   /**
