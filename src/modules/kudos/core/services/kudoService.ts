@@ -1,9 +1,9 @@
-import { KudoRepository } from '../../domain/repositories/KudoRepository';
-import { UserRepository } from '../../domain/repositories/UserRepository';
-import { Kudo, KudoFilters, CreateKudoRequest, User } from '../../domain/entities/KudoEntities';
+import { KudoRepository, KudoApiResponse } from '../interfaces/repositories/kudoRepository';
+import { UserRepository } from '../interfaces/repositories/userRepository';
+import { Kudo, KudoFilters, CreateKudoRequest, User, Team } from '../types/kudoTypes';
 
 /**
- * Service for managing kudos
+ * Service for managing kudos operations
  */
 export class KudoService {
   constructor(private kudoRepository: KudoRepository, private userRepository: UserRepository) {}
@@ -11,7 +11,7 @@ export class KudoService {
   /**
    * Get all kudos
    */
-  async getAllKudos(): Promise<Kudo[]> {
+  async getAllKudos(): Promise<KudoApiResponse> {
     return this.kudoRepository.getAllKudos();
   }
 
@@ -19,8 +19,16 @@ export class KudoService {
    * Get filtered kudos
    * @param filters Filters to apply
    */
-  async getFilteredKudos(filters: KudoFilters): Promise<Kudo[]> {
+  async getFilteredKudos(filters: KudoFilters): Promise<KudoApiResponse> {
     return this.kudoRepository.getFilteredKudos(filters);
+  }
+
+  /**
+   * Get a kudo by ID
+   * @param id Kudo ID
+   */
+  async getKudoById(id: string): Promise<Kudo | null> {
+    return this.kudoRepository.getKudoById(id);
   }
 
   /**
@@ -41,11 +49,15 @@ export class KudoService {
   /**
    * Get available teams
    */
-  async getTeams(): Promise<string[]> {
-    const users = await this.userRepository.getAllUsers();
-    const teams = users.map((user) => user.team);
-    // Get unique team names
-    return Array.from(new Set(teams));
+  async getTeams(): Promise<Team[]> {
+    try {
+      // Access the API through the repository
+      return this.userRepository.getTeams();
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      // Return empty array if API fails
+      return [];
+    }
   }
 
   /**

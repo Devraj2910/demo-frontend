@@ -1,138 +1,157 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Kudo, User } from '@/modules/kudos/domain/entities/Kudo';
-import { KudosApiClient } from '@/modules/kudos/infrastructure/KudosApiClient';
+import React, { useState, useEffect, useRef } from 'react';
+import { useKudoForm } from '../hooks/useKudoForm';
+import { useUsers } from '../hooks/useUsers';
+import { CreateKudoRequest, KudoCategory, User, Kudo } from '../../core/types/kudoTypes';
 import KudoCard from './KudoCard';
+import TeamSelectDropdown from './TeamSelectDropdown';
 
 // Define kudo categories
-const KUDO_CATEGORIES = [
-  'Teamwork',
-  'Innovation',
-  'Excellence',
-  'Leadership',
-  'Problem Solving',
-  'Customer Focus',
-  'Knowledge Sharing',
-  'Helping Hand',
-];
+const KUDO_CATEGORIES = ['Teamwork', 'Innovation', 'Excellence', 'Leadership', 'Helping Hand'];
 
-export default function KudoForm({ onClose, onSubmit }: { onClose: () => void; onSubmit: (kudo: Kudo) => void }) {
+interface KudoFormProps {
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
+  // Get form submission hook
+  const { submitKudo, isSubmitting, success, error } = useKudoForm();
+
+  // Get users data
+  const { users, searchUsers, isLoading: isLoadingUsers } = useUsers();
+
   // Form state
-  const [recipientSearch, setRecipientSearch] = useState('');
+  const [formData, setFormData] = useState<CreateKudoRequest>({
+    content: '',
+    recipientId: '',
+    category: 'default',
+    team: '',
+  });
+
+  // State for recipient search
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showUserList, setShowUserList] = useState(false);
   const [selectedRecipient, setSelectedRecipient] = useState<User | null>(null);
-  const [category, setCategory] = useState('');
-  const [message, setMessage] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
 
-  // UI state
-  const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  // Selection tracking
+  const justSelectedRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize API client
-  const apiClient = KudosApiClient.getInstance();
+  // Categories for dropdown
+  const categories: KudoCategory[] = KUDO_CATEGORIES as KudoCategory[];
 
-  // Search for users using the API
+  // Search for users when search term changes
   useEffect(() => {
-    const searchUsers = async () => {
-      if (recipientSearch.trim().length < 2) {
-        setSearchResults([]);
-        return;
-      }
-
-      setIsLoading(true);
-
-      try {
-        const users = await apiClient.searchUsers(recipientSearch);
-        setSearchResults(users);
-        setShowResults(true);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error searching users:', error);
-        setIsLoading(false);
-      }
-    };
-
-    const debounce = setTimeout(() => {
-      searchUsers();
-    }, 300);
-
-    return () => clearTimeout(debounce);
-  }, [recipientSearch]);
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!selectedRecipient) {
-      setError('Please select a recipient');
+    // Skip if we just selected a user
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
       return;
     }
 
-    if (message.trim().length < 10) {
-      setError('Message must be at least 10 characters');
-      return;
+    if (searchTerm.length >= 2) {
+      console.log(`Searching for users matching "${searchTerm}"`);
+      searchUsers(searchTerm);
+      setShowUserList(true);
+    } else {
+      setShowUserList(false);
     }
+  }, [searchTerm, searchUsers]);
 
-    setIsLoading(true);
+  // Reset form on successful submission
+  useEffect(() => {
+    if (success) {
+      onSuccess();
+    }
+  }, [success, onSuccess]);
 
-    // Create kudo data object that matches our API structure
-    const kudoData = {
-      title: category || '',
-      content: message,
-      createdFor: selectedRecipient.id,
-      // category: category,
-    };
+  // Handle form field changes
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    try {
-      // Call the API to create a new kudo
-      const createdKudo = await apiClient.createKudo(kudoData);
-
-      // Reset form
-      setSelectedRecipient(null);
-      setRecipientSearch('');
-      setCategory('');
-      setMessage('');
-      setIsPublic(true);
-      setSuccess(true);
-
-      // Notify parent component
-      if (onSubmit) {
-        onSubmit(createdKudo);
-      }
-
-      // Close modal immediately
-      onClose();
-
-      // Clear success message after a delay
-      setTimeout(() => {
-        setSuccess(false);
-      }, 2000);
-
-      setIsLoading(false);
-    } catch (err) {
-      console.error('Error creating kudo:', err);
-      setError('Failed to create kudo. Please try again.');
-      setIsLoading(false);
+  // Handle search input focus
+  const handleSearchFocus = () => {
+    // Only show the dropdown if there's search text and we haven't just selected
+    if (searchTerm.length >= 2 && !justSelectedRef.current) {
+      setShowUserList(true);
     }
   };
 
-  // Handle recipient selection
-  const handleSelectRecipient = (user: User) => {
+  // Handle search input blur
+  const handleSearchBlur = () => {
+    // Use setTimeout to allow click events on the dropdown to fire before hiding
+    setTimeout(() => {
+      if (!justSelectedRef.current) {
+        setShowUserList(false);
+      }
+    }, 200);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log(`Search input changed to: "${value}"`);
+    setSearchTerm(value);
+    if (!value) {
+      setSelectedRecipient(null);
+      setFormData((prev) => ({ ...prev, recipientId: '' }));
+      setShowUserList(false);
+    }
+  };
+
+  // Handle user selection
+  const handleSelectUser = (user: User) => {
+    console.log(`Selected user:`, user);
+    justSelectedRef.current = true;
     setSelectedRecipient(user);
-    setRecipientSearch(user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim());
-    setShowResults(false);
+    setSearchTerm(
+      `${user.fullName || (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email)}`
+    );
+    setFormData((prev) => ({ ...prev, recipientId: user.id }));
+    setShowUserList(false);
+
+    // Move focus to the next field
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.recipientId) {
+      alert('Please select a recipient');
+      return;
+    }
+
+    try {
+      // Use category as title but keep the original category field too
+      const requestData = {
+        ...formData,
+        title: formData.category, // Use category value as title
+        createdAt: new Date().toISOString(),
+      };
+
+      const result = await submitKudo(requestData);
+
+      if (result.success) {
+        // If successful, notify the parent component
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Error submitting kudos:', error);
+    }
   };
 
   // Generate preview kudo
   const previewKudo: Kudo = {
     id: 'preview',
-    title: category || 'Kudos',
-    content: message || 'Your message will appear here...',
+    title: formData.category || 'Select a category...',
+    content: formData.content || 'Your message will appear here...',
     userId: 'current-user',
     createdFor: selectedRecipient?.id || 'recipient',
     createdAt: new Date().toISOString(),
@@ -151,7 +170,7 @@ export default function KudoForm({ onClose, onSubmit }: { onClose: () => void; o
       lastName: 'Name',
       fullName: 'Recipient Name',
     },
-    category: category,
+    team: formData.team,
   };
 
   return (
@@ -162,7 +181,7 @@ export default function KudoForm({ onClose, onSubmit }: { onClose: () => void; o
           <div className='flex justify-between items-center mb-4'>
             <h2 className='text-xl font-bold text-gray-800'>Give Kudos</h2>
             <button
-              onClick={onClose}
+              onClick={onCancel}
               className='text-gray-500 hover:text-gray-700 transition-colors'
               aria-label='Close'
             >
@@ -179,105 +198,123 @@ export default function KudoForm({ onClose, onSubmit }: { onClose: () => void; o
           {error && <div className='bg-red-100 text-red-700 p-3 mb-4 rounded text-sm'>{error}</div>}
 
           <form onSubmit={handleSubmit}>
-            {/* Recipient Selection */}
-            <div className='mb-3 relative'>
-              <label htmlFor='recipient' className='block text-gray-700 font-medium mb-1 text-sm'>
+            {/* Recipient search */}
+            <div className='mb-4'>
+              <label htmlFor='recipient' className='block text-sm font-medium text-gray-700 mb-1'>
                 Recipient *
               </label>
-              <input
-                type='text'
-                id='recipient'
-                className='w-full px-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm'
-                placeholder='Search for a colleague...'
-                value={recipientSearch}
-                onChange={(e) => setRecipientSearch(e.target.value)}
-                onFocus={() => setShowResults(true)}
-                required
-              />
+              <div className='relative'>
+                <input
+                  type='text'
+                  id='recipient'
+                  placeholder='Search for a colleague...'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  onFocus={handleSearchFocus}
+                  onBlur={handleSearchBlur}
+                  ref={inputRef}
+                  autoComplete='off'
+                />
 
-              {showResults && searchResults.length > 0 && (
-                <div className='absolute z-10 w-full mt-1 bg-white border rounded shadow-md max-h-48 overflow-y-auto'>
-                  {searchResults.map((user) => (
-                    <div
-                      key={user.id}
-                      className='p-2 hover:bg-gray-100 cursor-pointer flex items-center'
-                      onClick={() => handleSelectRecipient(user)}
-                    >
-                      <div className='w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white mr-2 text-xs'>
-                        {user.firstName ? user.firstName.charAt(0) : '?'}
-                      </div>
-                      <div>
-                        <div className='font-medium text-sm'>
-                          {user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown'}
-                        </div>
-                        <div className='text-xs text-gray-600'>Email: {user.email}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {isLoading && <div className='mt-1 text-gray-600 text-xs'>Searching...</div>}
+                {showUserList && searchTerm.length >= 2 && (
+                  <div className='absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto'>
+                    {isLoadingUsers ? (
+                      <div className='p-3 text-center text-gray-500'>Loading...</div>
+                    ) : users.length > 0 ? (
+                      <ul>
+                        {users.map((user) => (
+                          <li
+                            key={user.id}
+                            className='px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center'
+                            onClick={() => handleSelectUser(user)}
+                          >
+                            {user.avatar && (
+                              <img src={user.avatar} alt={user.fullName} className='h-8 w-8 rounded-full mr-2' />
+                            )}
+                            <div>
+                              <div className='font-medium'>{user.fullName}</div>
+                              <div className='text-sm text-gray-500'>{user.email}</div>
+                              {user.team && <div className='text-xs text-gray-400'>{user.team}</div>}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className='p-3 text-center text-gray-500'>No users found</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Category Selection */}
-            <div className='mb-3'>
-              <label htmlFor='category' className='block text-gray-700 font-medium mb-1 text-sm'>
-                Category *
+            {/* Category selection */}
+            <div className='mb-4'>
+              <label htmlFor='category' className='block text-sm font-medium text-gray-700 mb-1'>
+                Category (determines card color)
               </label>
               <select
                 id='category'
-                className='w-full px-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm'
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
+                name='category'
+                className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                value={formData.category}
+                onChange={handleChange}
               >
-                <option value=''>Select a category</option>
-                {KUDO_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                <option value='default'>Select a category...</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Message */}
-            <div className='mb-3'>
-              <label htmlFor='message' className='block text-gray-700 font-medium mb-1 text-sm'>
+            {/* Team selection */}
+            <div className='mb-4'>
+              <TeamSelectDropdown
+                onChange={(teamId) => setFormData((prev) => ({ ...prev, team: teamId }))}
+                value={formData.team}
+                label='Team'
+                id='team-select'
+                includeAllTeams={true}
+              />
+            </div>
+
+            {/* Content field */}
+            <div className='mb-4'>
+              <label htmlFor='content' className='block text-sm font-medium text-gray-700 mb-1'>
                 Message *
               </label>
               <textarea
-                id='message'
-                className='w-full px-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 h-24 text-sm'
-                placeholder='Why do you want to recognize this person?'
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                id='content'
+                name='content'
+                rows={4}
+                placeholder='Write your appreciation message here...'
+                className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                value={formData.content}
+                onChange={handleChange}
                 required
-              />
-              <div className='text-xs text-gray-600 mt-1'>{message.length} / 10 characters minimum</div>
+              ></textarea>
             </div>
 
-            {/* Visibility Toggle */}
-            <div className='mb-4'>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='form-checkbox h-4 w-4 text-blue-600'
-                  checked={isPublic}
-                  onChange={(e) => setIsPublic(e.target.checked)}
-                />
-                <span className='ml-2 text-gray-700 text-sm'>Make this kudo visible to everyone</span>
-              </label>
+            {/* Submit button */}
+            <div className='flex justify-end'>
+              <button
+                type='button'
+                onClick={onCancel}
+                className='mr-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors'
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type='submit'
+                className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-300'
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Sending...' : 'Send Kudos'}
+              </button>
             </div>
-
-            {/* Submit Button */}
-            <button
-              type='submit'
-              className='w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-opacity-50 transition text-sm'
-              disabled={isLoading}
-            >
-              {isLoading ? 'Sending...' : 'Send Kudos'}
-            </button>
           </form>
         </div>
 

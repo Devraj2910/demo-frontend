@@ -1,4 +1,13 @@
-import { Kudo, KudoFilters, CreateKudoRequest } from '../entities/KudoEntities';
+import { Kudo, KudoFilters, CreateKudoRequest } from '../../types/kudoTypes';
+
+// API response interface to match server response format
+export interface KudoApiResponse {
+  cards: Kudo[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 /**
  * Repository interface for kudos operations
@@ -7,13 +16,13 @@ export interface KudoRepository {
   /**
    * Get all kudos
    */
-  getAllKudos(): Promise<Kudo[]>;
+  getAllKudos(): Promise<KudoApiResponse>;
 
   /**
    * Get kudos with filters applied
    * @param filters Filters to apply
    */
-  getFilteredKudos(filters: KudoFilters): Promise<Kudo[]>;
+  getFilteredKudos(filters: KudoFilters): Promise<KudoApiResponse>;
 
   /**
    * Get a single kudo by ID

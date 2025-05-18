@@ -1,4 +1,5 @@
-import { KudoService } from '../services/KudoService';
+import { KudoService } from '../services/kudoService';
+import { UseCaseResult, User } from '../types/kudoTypes';
 
 /**
  * Use case for searching users
@@ -8,9 +9,9 @@ export class SearchUsersUseCase {
 
   /**
    * Execute the use case to search for users
-   * @param query The search query string
+   * @param query The search query
    */
-  async execute(query: string) {
+  async execute(query: string): Promise<UseCaseResult<User[]>> {
     try {
       if (!query || query.trim().length < 2) {
         return {
@@ -27,7 +28,6 @@ export class SearchUsersUseCase {
       };
     } catch (error) {
       console.error('Error searching users:', error);
-
       return {
         success: false,
         error: 'Failed to search users',

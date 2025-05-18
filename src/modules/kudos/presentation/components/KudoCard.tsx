@@ -1,12 +1,14 @@
 'use client';
-import { Kudo } from '../../domain/entities/Kudo';
+import { Kudo } from '../../core/types/kudoTypes';
 
 // Map categories to colors for the entire card
 const categoryColors: Record<string, string> = {
-  Teamwork: 'bg-blue-100',
-  Innovation: 'bg-purple-100',
-  'Helping Hand': 'bg-green-100',
-  default: 'bg-yellow-100',
+  Teamwork: 'bg-blue-100 from-blue-50 to-blue-200',
+  Innovation: 'bg-purple-100 from-purple-50 to-purple-200',
+  'Helping Hand': 'bg-green-100 from-green-50 to-green-200',
+  Leadership: 'bg-red-100 from-red-50 to-red-200',
+  Excellence: 'bg-indigo-100 from-indigo-50 to-indigo-200',
+  default: 'bg-yellow-100 from-yellow-50 to-yellow-200',
 };
 
 // Map categories to emojis
@@ -14,6 +16,8 @@ const categoryEmojis: Record<string, string> = {
   Teamwork: '👥',
   Innovation: '💡',
   'Helping Hand': '🤝',
+  Leadership: '🌟',
+  Excellence: '🏆',
   // Default emoji for other categories
   default: '👍',
 };
@@ -73,6 +77,13 @@ export default function KudoCard({ kudo }: { kudo: Kudo }) {
         {emoji}
       </div>
 
+      {/* Category badge */}
+      <div className='absolute top-4 left-4 z-20'>
+        <span className='inline-flex items-center rounded-full bg-white px-2.5 py-1 text-xs font-medium shadow-sm'>
+          {emoji} {category}
+        </span>
+      </div>
+
       {/* Tape effect at the top */}
       <div
         className='w-16 h-4 bg-gray-200 opacity-70 mx-auto -mt-1 rounded-b-lg'
@@ -107,9 +118,9 @@ export default function KudoCard({ kudo }: { kudo: Kudo }) {
           {recipientName}
         </h2>
 
-        {/* Category or Title */}
+        {/* Title */}
         <p className='text-sm text-gray-700 font-medium mt-1' style={{ textShadow: '0 1px 1px rgba(255,255,255,0.4)' }}>
-          {kudo.title || category}
+          {kudo.title || 'Kudos'}
         </p>
       </div>
 
