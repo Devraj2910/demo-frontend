@@ -202,7 +202,7 @@ export class MockKudoRepository implements KudoRepository {
     // Create new kudo
     const newKudo: Kudo = {
       id: Math.random().toString(36).substr(2, 9),
-      title: data.title,
+      title: data.title || '',
       content: data.content || data.message || '',
       userId: senderId,
       createdFor: data.recipientId,

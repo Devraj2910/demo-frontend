@@ -1,4 +1,4 @@
-import { User } from '../../types/kudoTypes';
+import { User, Team } from '../../types/kudoTypes';
 
 /**
  * Repository interface for user operations
@@ -25,4 +25,9 @@ export interface UserRepository {
    * @param query The search query string
    */
   searchUsers(query: string): Promise<User[]>;
+
+  /**
+   * Get all available teams
+   */
+  getTeams(): Promise<Team[]>;
 }

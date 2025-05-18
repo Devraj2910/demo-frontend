@@ -1,6 +1,6 @@
 import { KudoRepository, KudoApiResponse } from '../interfaces/repositories/kudoRepository';
 import { UserRepository } from '../interfaces/repositories/userRepository';
-import { Kudo, KudoFilters, CreateKudoRequest, User } from '../types/kudoTypes';
+import { Kudo, KudoFilters, CreateKudoRequest, User, Team } from '../types/kudoTypes';
 
 /**
  * Service for managing kudos operations
@@ -49,12 +49,15 @@ export class KudoService {
   /**
    * Get available teams
    */
-  async getTeams(): Promise<string[]> {
-    const users = await this.userRepository.getAllUsers();
-    const teams = users.map((user) => user.team).filter((team): team is string => team !== undefined);
-
-    // Get unique team names
-    return Array.from(new Set(teams));
+  async getTeams(): Promise<Team[]> {
+    try {
+      // Access the API through the repository
+      return this.userRepository.getTeams();
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      // Return empty array if API fails
+      return [];
+    }
   }
 
   /**

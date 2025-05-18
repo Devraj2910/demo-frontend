@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { KudoFilters, KudoCategory } from '../../core/types/kudoTypes';
+import { KudoFilters, KudoCategory, Team } from '../../core/types/kudoTypes';
 import { GetTeamsUseCase } from '../../core/useCases/getTeamsUseCase';
 import { KudoService } from '../../core/services/kudoService';
 import { ApiKudoRepository } from '../../infrastructure/repositories/ApiKudoRepository';
@@ -21,7 +21,7 @@ interface KudoFilterProps {
 export default function KudoFilter({ onFilterChange, initialFilters }: KudoFilterProps) {
   // Setup local state for filters
   const [filters, setFilters] = useState<KudoFilters>(initialFilters || {});
-  const [teams, setTeams] = useState<string[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
 
   // Load teams on component mount
@@ -83,9 +83,12 @@ export default function KudoFilter({ onFilterChange, initialFilters }: KudoFilte
     onFilterChange(clearedFilters);
   };
 
-  // Common styles for all filter inputs
+  // Custom select styles with improved arrow
   const inputStyles =
     'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white';
+
+  const selectStyles = `${inputStyles} appearance-none bg-no-repeat bg-right pr-8`;
+  const selectWrapperStyles = 'relative w-full';
 
   return (
     <div className='bg-white p-4 rounded-lg shadow-sm mb-6'>
@@ -95,7 +98,7 @@ export default function KudoFilter({ onFilterChange, initialFilters }: KudoFilte
 
       <div className='flex gap-4'>
         {/* Search input */}
-        <div>
+        <div className='w-full'>
           <label htmlFor='search' className='block text-sm font-medium text-gray-700 mb-1'>
             Search
           </label>
@@ -110,28 +113,35 @@ export default function KudoFilter({ onFilterChange, initialFilters }: KudoFilte
         </div>
 
         {/* Team filter */}
-        <div>
+        <div className='w-full'>
           <TeamSelectDropdown value={filters.team} onChange={handleTeamChange} includeAllTeams={true} />
         </div>
 
         {/* Category filter */}
-        <div>
+        <div className={selectWrapperStyles}>
           <label htmlFor='category' className='block text-sm font-medium text-gray-700 mb-1'>
             Category
           </label>
-          <select
-            id='category'
-            className={inputStyles}
-            value={filters.category || 'All Categories'}
-            onChange={handleCategoryChange}
-          >
-            <option value='All Categories'>All Categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+          <div className='relative'>
+            <select
+              id='category'
+              className={selectStyles}
+              value={filters.category || 'All Categories'}
+              onChange={handleCategoryChange}
+            >
+              <option value='All Categories'>All Categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+            <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
+              <svg className='fill-current h-4 w-4' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'>
+                <path d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z' />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 

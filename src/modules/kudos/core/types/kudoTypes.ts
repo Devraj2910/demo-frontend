@@ -37,11 +37,12 @@ export interface KudoFilters {
 }
 
 export interface CreateKudoRequest {
-  title: string;
+  title?: string;
   content: string;
   recipientId: string;
   category?: string;
   message?: string;
+  team?: string;
 }
 
 export interface UseCaseResult<T> {
@@ -50,9 +51,19 @@ export interface UseCaseResult<T> {
   error?: string;
 }
 
-export type KudoCategory = 'Teamwork' | 'Innovation' | 'Helping Hand' | 'default';
+export type KudoCategory =
+  | 'Teamwork'
+  | 'Innovation'
+  | 'Excellence'
+  | 'Leadership'
+  | 'Customer Focus'
+  | 'Knowledge Sharing'
+  | 'Helping Hand'
+  | 'default';
 
 export interface Team {
-  id: string;
+  id: number;
   name: string;
+  createdAt: string;
+  updatedAt: string;
 }

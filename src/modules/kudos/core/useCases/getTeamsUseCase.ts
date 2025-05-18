@@ -1,5 +1,5 @@
 import { KudoService } from '../services/kudoService';
-import { UseCaseResult } from '../types/kudoTypes';
+import { UseCaseResult, Team } from '../types/kudoTypes';
 
 /**
  * Use case for getting a list of teams
@@ -10,7 +10,7 @@ export class GetTeamsUseCase {
   /**
    * Execute the use case to get all teams
    */
-  async execute(): Promise<UseCaseResult<string[]>> {
+  async execute(): Promise<UseCaseResult<Team[]>> {
     try {
       const teams = await this.kudoService.getTeams();
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useKudoForm } from '../hooks/useKudoForm';
 import { useUsers } from '../hooks/useUsers';
 import { CreateKudoRequest, KudoCategory, User, Kudo } from '../../core/types/kudoTypes';
@@ -8,16 +8,7 @@ import KudoCard from './KudoCard';
 import TeamSelectDropdown from './TeamSelectDropdown';
 
 // Define kudo categories
-const KUDO_CATEGORIES = [
-  'Teamwork',
-  'Innovation',
-  'Excellence',
-  'Leadership',
-  'Problem Solving',
-  'Customer Focus',
-  'Knowledge Sharing',
-  'Helping Hand',
-];
+const KUDO_CATEGORIES = ['Teamwork', 'Innovation', 'Excellence', 'Leadership', 'Helping Hand'];
 
 interface KudoFormProps {
   onSuccess: () => void;
@@ -33,30 +24,40 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
 
   // Form state
   const [formData, setFormData] = useState<CreateKudoRequest>({
-    title: '',
     content: '',
     recipientId: '',
     category: 'default',
+    team: '',
   });
 
   // State for recipient search
   const [searchTerm, setSearchTerm] = useState('');
   const [showUserList, setShowUserList] = useState(false);
   const [selectedRecipient, setSelectedRecipient] = useState<User | null>(null);
-  const [selectedTeam, setSelectedTeam] = useState<string>('');
+
+  // Selection tracking
+  const justSelectedRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Categories for dropdown
-  const categories: KudoCategory[] = ['Teamwork', 'Innovation', 'Helping Hand', 'default'];
+  const categories: KudoCategory[] = KUDO_CATEGORIES as KudoCategory[];
 
   // Search for users when search term changes
   useEffect(() => {
+    // Skip if we just selected a user
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
+
     if (searchTerm.length >= 2) {
-      searchUsers(searchTerm, selectedTeam);
+      console.log(`Searching for users matching "${searchTerm}"`);
+      searchUsers(searchTerm);
       setShowUserList(true);
     } else {
       setShowUserList(false);
     }
-  }, [searchTerm, searchUsers, selectedTeam]);
+  }, [searchTerm, searchUsers]);
 
   // Reset form on successful submission
   useEffect(() => {
@@ -66,37 +67,56 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
   }, [success, onSuccess]);
 
   // Handle form field changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    if (!e.target.value) {
-      setSelectedRecipient(null);
-      setFormData((prev) => ({ ...prev, recipientId: '' }));
+  // Handle search input focus
+  const handleSearchFocus = () => {
+    // Only show the dropdown if there's search text and we haven't just selected
+    if (searchTerm.length >= 2 && !justSelectedRef.current) {
+      setShowUserList(true);
     }
   };
 
-  // Handle team selection change
-  const handleTeamChange = (team: string) => {
-    setSelectedTeam(team);
-    // Reset recipient if team changes
-    if (selectedRecipient) {
+  // Handle search input blur
+  const handleSearchBlur = () => {
+    // Use setTimeout to allow click events on the dropdown to fire before hiding
+    setTimeout(() => {
+      if (!justSelectedRef.current) {
+        setShowUserList(false);
+      }
+    }, 200);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log(`Search input changed to: "${value}"`);
+    setSearchTerm(value);
+    if (!value) {
       setSelectedRecipient(null);
-      setSearchTerm('');
       setFormData((prev) => ({ ...prev, recipientId: '' }));
+      setShowUserList(false);
     }
   };
 
   // Handle user selection
   const handleSelectUser = (user: User) => {
+    console.log(`Selected user:`, user);
+    justSelectedRef.current = true;
     setSelectedRecipient(user);
-    setSearchTerm(`${user.fullName}`);
+    setSearchTerm(
+      `${user.fullName || (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email)}`
+    );
     setFormData((prev) => ({ ...prev, recipientId: user.id }));
     setShowUserList(false);
+
+    // Move focus to the next field
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
   };
 
   // Handle form submission
@@ -109,9 +129,10 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
     }
 
     try {
-      // Add current timestamp
+      // Use category as title but keep the original category field too
       const requestData = {
         ...formData,
+        title: formData.category, // Use category value as title
         createdAt: new Date().toISOString(),
       };
 
@@ -129,7 +150,7 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
   // Generate preview kudo
   const previewKudo: Kudo = {
     id: 'preview',
-    title: formData.title || 'Kudos',
+    title: formData.category || 'Select a category...',
     content: formData.content || 'Your message will appear here...',
     userId: 'current-user',
     createdFor: selectedRecipient?.id || 'recipient',
@@ -149,7 +170,7 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
       lastName: 'Name',
       fullName: 'Recipient Name',
     },
-    category: formData.category,
+    team: formData.team,
   };
 
   return (
@@ -177,17 +198,6 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
           {error && <div className='bg-red-100 text-red-700 p-3 mb-4 rounded text-sm'>{error}</div>}
 
           <form onSubmit={handleSubmit}>
-            {/* Team filter */}
-            <div className='mb-4'>
-              <TeamSelectDropdown
-                label='Filter by Team (Optional)'
-                includeAllTeams={true}
-                defaultOption='All Teams'
-                value={selectedTeam}
-                onChange={handleTeamChange}
-              />
-            </div>
-
             {/* Recipient search */}
             <div className='mb-4'>
               <label htmlFor='recipient' className='block text-sm font-medium text-gray-700 mb-1'>
@@ -201,6 +211,9 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
                   className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
                   value={searchTerm}
                   onChange={handleSearchChange}
+                  onFocus={handleSearchFocus}
+                  onBlur={handleSearchBlur}
+                  ref={inputRef}
                   autoComplete='off'
                 />
 
@@ -238,7 +251,7 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
             {/* Category selection */}
             <div className='mb-4'>
               <label htmlFor='category' className='block text-sm font-medium text-gray-700 mb-1'>
-                Category
+                Category (determines card color)
               </label>
               <select
                 id='category'
@@ -247,6 +260,7 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
                 value={formData.category}
                 onChange={handleChange}
               >
+                <option value='default'>Select a category...</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>
                     {category}
@@ -255,20 +269,14 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
               </select>
             </div>
 
-            {/* Title field */}
+            {/* Team selection */}
             <div className='mb-4'>
-              <label htmlFor='title' className='block text-sm font-medium text-gray-700 mb-1'>
-                Title *
-              </label>
-              <input
-                type='text'
-                id='title'
-                name='title'
-                placeholder='E.g., Thanks for your help!'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                value={formData.title}
-                onChange={handleChange}
-                required
+              <TeamSelectDropdown
+                onChange={(teamId) => setFormData((prev) => ({ ...prev, team: teamId }))}
+                value={formData.team}
+                label='Team'
+                id='team-select'
+                includeAllTeams={true}
               />
             </div>
 

@@ -15,6 +15,15 @@ const kudoService = new KudoService(kudoRepository, userRepository);
 const searchUsersUseCase = new SearchUsersUseCase(kudoService);
 const getCurrentUserUseCase = new GetCurrentUserUseCase(kudoService);
 
+// Types for API response structures
+interface UserApiResponse {
+  users: User[];
+}
+
+interface NestedDataResponse {
+  data: User[];
+}
+
 interface UseUsersResult {
   users: User[];
   currentUser: User | null;
@@ -56,20 +65,58 @@ export const useUsers = (): UseUsersResult => {
     setIsLoading(true);
     setError(null);
 
+    console.log(`Searching users with query: "${query}", team filter: "${team || 'none'}"`);
+
     try {
       const result = await searchUsersUseCase.execute(query);
 
+      console.log('Search users result:', JSON.stringify(result, null, 2));
+
       if (result.success && result.data) {
-        // Filter results by team if a team is specified
-        const filteredUsers = team ? result.data.filter((user) => user.team === team) : result.data;
+        // Handle different response formats
+        let userData: User[] = [];
+
+        console.log('Result data type:', typeof result.data);
+        console.log('Is array?', Array.isArray(result.data));
+        console.log('Result data keys:', result.data ? Object.keys(result.data) : 'null');
+
+        if (Array.isArray(result.data)) {
+          userData = result.data;
+          console.log('Using array data directly');
+        } else if (result.data && typeof result.data === 'object') {
+          // Check all possible formats
+          if ('users' in result.data) {
+            userData = (result.data as UserApiResponse).users || [];
+            console.log('Found users array in data.users');
+          } else if ('data' in result.data && Array.isArray((result.data as NestedDataResponse).data)) {
+            userData = (result.data as NestedDataResponse).data;
+            console.log('Found users array in data.data');
+          } else {
+            // Treat the object as a single user if it has id property
+            if ('id' in result.data) {
+              userData = [result.data as unknown as User];
+              console.log('Using single user object');
+            } else {
+              console.log('Could not find users array in response', result.data);
+            }
+          }
+        }
+
+        console.log('Extracted user data:', userData);
+
+        const filteredUsers = team ? userData.filter((user: User) => user.team === team) : userData;
+        console.log('Users after team filtering:', filteredUsers.length, 'users found');
 
         setUsers(filteredUsers);
       } else {
+        console.error('Failed to search users:', result.error);
         setError(result.error || 'Failed to search users');
+        setUsers([]);
       }
     } catch (err) {
-      setError('An unexpected error occurred');
       console.error('Error searching users:', err);
+      setError('An unexpected error occurred while searching users');
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }

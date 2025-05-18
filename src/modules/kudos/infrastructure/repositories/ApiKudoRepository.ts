@@ -58,15 +58,15 @@ export class ApiKudoRepository implements KudoRepository {
       const queryParams = new URLSearchParams();
 
       if (filters.searchTerm) {
-        queryParams.append('search', filters.searchTerm);
+        queryParams.append('searchText', filters.searchTerm);
       }
 
       if (filters.category) {
-        queryParams.append('category', filters.category);
+        queryParams.append('title', filters.category);
       }
 
       if (filters.team) {
-        queryParams.append('team', filters.team);
+        queryParams.append('teamId', filters.team);
       }
 
       // Build URL with query parameters
@@ -118,11 +118,12 @@ export class ApiKudoRepository implements KudoRepository {
    */
   async createKudo(data: CreateKudoRequest, senderId: string): Promise<Kudo> {
     try {
-      // Add sender ID to the request data
+      // Format the data for the API request
       const requestData = {
-        ...data,
-        senderId,
-        createdAt: new Date().toISOString(),
+        title: data.category || data.title,
+        teamId: data.team,
+        content: data.content,
+        createdFor: data.recipientId,
       };
 
       const response = await axios.post(`${API_URL}/cards`, requestData, {

@@ -1,5 +1,5 @@
 import { UserRepository } from '../../core/interfaces/repositories/userRepository';
-import { User } from '../../core/types/kudoTypes';
+import { User, Team } from '../../core/types/kudoTypes';
 
 /**
  * Mock implementation of the UserRepository for development and testing
@@ -125,5 +125,36 @@ export class MockUserRepository implements UserRepository {
     });
 
     return this.mockApiCall(results);
+  }
+
+  /**
+   * Get all available teams
+   */
+  async getTeams(): Promise<Team[]> {
+    // Get unique team names from users
+    const teamNames = Array.from(
+      new Set(this.users.map((user) => user.team).filter((team): team is string => team !== undefined))
+    );
+
+    // Create Team objects from the names
+    let teams: Team[] = teamNames.map((name, index) => ({
+      id: index + 1,
+      name,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+
+    // If no teams found in mock data, return default teams matching API format
+    if (teams.length === 0) {
+      teams = [
+        { id: 1, name: 'Alpha', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        { id: 2, name: 'Bravo', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        { id: 3, name: 'Charlie', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        { id: 4, name: 'Data', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        { id: 5, name: 'Engineering', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      ];
+    }
+
+    return this.mockApiCall(teams);
   }
 }
