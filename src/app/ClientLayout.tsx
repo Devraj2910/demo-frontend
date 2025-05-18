@@ -25,14 +25,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       // Initialize the analytics module
       initializeAnalyticsModule();
       setInitialized(true);
-      console.log('Modules initialized in useEffect');
     }
   }, [initialized]);
 
   return (
     <AuthProvider>
       {!isHomePage && <NavigationBar />}
-      <main className='mt-16'>{children}</main>
+      <main className={`${!isHomePage ? 'mt-16' : ''}`}>{children}</main>
     </AuthProvider>
   );
 }
