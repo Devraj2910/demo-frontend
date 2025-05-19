@@ -30,6 +30,12 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
     team: '',
   });
 
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState<{
+    recipientId?: string;
+    team?: string;
+  }>({});
+
   // State for recipient search
   const [searchTerm, setSearchTerm] = useState('');
   const [showUserList, setShowUserList] = useState(false);
@@ -70,6 +76,11 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear errors when field is changed
+    if (formErrors[name as keyof typeof formErrors]) {
+      setFormErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   // Handle search input focus
@@ -100,6 +111,11 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
       setFormData((prev) => ({ ...prev, recipientId: '' }));
       setShowUserList(false);
     }
+
+    // Clear recipient error when field is changed
+    if (formErrors.recipientId) {
+      setFormErrors((prev) => ({ ...prev, recipientId: undefined }));
+    }
   };
 
   // Handle user selection
@@ -113,9 +129,22 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
     setFormData((prev) => ({ ...prev, recipientId: user.id }));
     setShowUserList(false);
 
+    // Clear error
+    setFormErrors((prev) => ({ ...prev, recipientId: undefined }));
+
     // Move focus to the next field
     if (inputRef.current) {
       inputRef.current.blur();
+    }
+  };
+
+  // Handle team selection
+  const handleTeamChange = (teamId: string) => {
+    setFormData((prev) => ({ ...prev, team: teamId }));
+
+    // Clear error
+    if (formErrors.team) {
+      setFormErrors((prev) => ({ ...prev, team: undefined }));
     }
   };
 
@@ -123,8 +152,23 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate form
+    const errors: {
+      recipientId?: string;
+      team?: string;
+    } = {};
+
     if (!formData.recipientId) {
-      alert('Please select a recipient');
+      errors.recipientId = 'Please select a recipient';
+    }
+
+    if (!formData.team) {
+      errors.team = 'Please select a team';
+    }
+
+    // If there are errors, show them and stop submission
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -208,7 +252,9 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
                   type='text'
                   id='recipient'
                   placeholder='Search for a colleague...'
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                  className={`w-full px-3 py-2 border ${
+                    formErrors.recipientId ? 'border-red-500' : 'border-gray-300'
+                  } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
                   value={searchTerm}
                   onChange={handleSearchChange}
                   onFocus={handleSearchFocus}
@@ -216,6 +262,8 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
                   ref={inputRef}
                   autoComplete='off'
                 />
+
+                {formErrors.recipientId && <p className='text-red-500 text-xs mt-1'>{formErrors.recipientId}</p>}
 
                 {showUserList && searchTerm.length >= 2 && (
                   <div className='absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto'>
@@ -271,13 +319,20 @@ export default function KudoForm({ onSuccess, onCancel }: KudoFormProps) {
 
             {/* Team selection */}
             <div className='mb-4'>
-              <TeamSelectDropdown
-                onChange={(teamId) => setFormData((prev) => ({ ...prev, team: teamId }))}
-                value={formData.team}
-                label='Team'
-                id='team-select'
-                includeAllTeams={true}
-              />
+              <label htmlFor='team-select' className='block text-sm font-medium text-gray-700 mb-1'>
+                Team *
+              </label>
+              <div>
+                <TeamSelectDropdown
+                  onChange={handleTeamChange}
+                  value={formData.team}
+                  label=''
+                  id='team-select'
+                  includeAllTeams={true}
+                  className={formErrors.team ? 'border-red-500' : ''}
+                />
+                {formErrors.team && <p className='text-red-500 text-xs mt-1'>{formErrors.team}</p>}
+              </div>
             </div>
 
             {/* Content field */}

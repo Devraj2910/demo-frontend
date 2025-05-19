@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Sidebar } from './presentation/components/Sidebar';
-import AdminDashboard from './presentation/components/AdminDashboard';
+import { useState } from 'react';
+import AdminDashboard from '@/modules/admin/presentation/components/AdminDashboard';
+import { Sidebar } from '@/modules/admin/presentation/components/Sidebar';
 
 export default function AdminPage() {
   const [activeSection, setActiveSection] = useState('requests');

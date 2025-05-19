@@ -1,38 +1,43 @@
-import { renderHook, act } from "@testing-library/react-hooks";
-import { useKudos } from "../useKudos";
-import { GetKudosUseCase } from "../../../core/useCases/getKudosUseCase";
-import { KudoFilters } from "../../../core/types/kudoTypes";
+import { renderHook, act } from '@testing-library/react-hooks';
+import { useKudos } from '../useKudos';
+import { GetKudosUseCase } from '../../../core/useCases/getKudosUseCase';
+import { KudoFilters } from '../../../core/types/kudoTypes';
 
 // No need to mock modules, we'll inject the mock directly
-jest.mock("console", () => ({
+jest.mock('console', () => ({
   log: jest.fn(),
   error: jest.fn(),
 }));
 
-describe("useKudos hook", () => {
+// Define the types for our mocks
+interface MockUseCase {
+  execute: jest.Mock;
+}
+
+describe('useKudos hook', () => {
   // Sample data
   const mockKudoData = [
     {
-      id: "1",
-      title: "Great job",
-      content: "Thanks for your help",
-      userId: "user1",
-      createdFor: "user2",
-      createdAt: "2023-01-01",
-      updatedAt: "2023-01-01",
+      id: '1',
+      title: 'Great job',
+      content: 'Thanks for your help',
+      userId: 'user1',
+      createdFor: 'user2',
+      createdAt: '2023-01-01',
+      updatedAt: '2023-01-01',
       creator: {
-        id: "user1",
-        email: "user1@example.com",
-        firstName: "John",
-        lastName: "Doe",
-        fullName: "John Doe",
+        id: 'user1',
+        email: 'user1@example.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        fullName: 'John Doe',
       },
       recipient: {
-        id: "user2",
-        email: "user2@example.com",
-        firstName: "Jane",
-        lastName: "Smith",
-        fullName: "Jane Smith",
+        id: 'user2',
+        email: 'user2@example.com',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        fullName: 'Jane Smith',
       },
     },
   ];
@@ -47,8 +52,8 @@ describe("useKudos hook", () => {
   };
 
   // Mock implementation
-  let mockExecute;
-  let mockUseCaseInstance;
+  let mockExecute: jest.Mock;
+  let mockUseCaseInstance: MockUseCase;
 
   beforeEach(() => {
     // Setup fresh mocks for each test
@@ -63,7 +68,7 @@ describe("useKudos hook", () => {
     };
   });
 
-  it("should fetch kudos on initial render", async () => {
+  it('should fetch kudos on initial render', async () => {
     // Arrange & Act - Pass the mock use case instance directly
     const { result, waitForNextUpdate } = renderHook(() =>
       useKudos(undefined, mockUseCaseInstance as unknown as GetKudosUseCase)
@@ -84,7 +89,7 @@ describe("useKudos hook", () => {
     expect(result.current.error).toBeNull();
   });
 
-  it("should filter kudos when filterKudos is called", async () => {
+  it('should filter kudos when filterKudos is called', async () => {
     // Arrange - Pass the mock use case instance directly
     const { result, waitForNextUpdate } = renderHook(() =>
       useKudos(undefined, mockUseCaseInstance as unknown as GetKudosUseCase)
@@ -94,7 +99,7 @@ describe("useKudos hook", () => {
     await waitForNextUpdate();
 
     // Setup new mock response for filtered data
-    const filters: KudoFilters = { searchTerm: "test" };
+    const filters: KudoFilters = { searchTerm: 'test' };
     const filteredKudoData = [mockKudoData[0]]; // Pretend this is filtered
     const filteredApiResponse = {
       cards: filteredKudoData,
@@ -118,13 +123,17 @@ describe("useKudos hook", () => {
     await waitForNextUpdate();
 
     // Assert
-    expect(mockExecute).toHaveBeenCalledWith(filters);
+    expect(mockExecute).toHaveBeenCalledWith({
+      ...filters,
+      page: 1,
+      limit: 9,
+    });
     expect(result.current.kudos).toEqual(filteredKudoData);
   });
 
-  it("should handle errors during data fetch", async () => {
+  it('should handle errors during data fetch', async () => {
     // Arrange
-    const errorMessage = "Failed to load kudos";
+    const errorMessage = 'Failed to load kudos';
     mockExecute.mockResolvedValueOnce({
       success: false,
       error: errorMessage,
@@ -144,7 +153,7 @@ describe("useKudos hook", () => {
     expect(result.current.error).toBe(errorMessage);
   });
 
-  it("should refresh kudos when refreshKudos is called", async () => {
+  it('should refresh kudos when refreshKudos is called', async () => {
     // Arrange - Pass the mock use case instance directly
     const { result, waitForNextUpdate } = renderHook(() =>
       useKudos(undefined, mockUseCaseInstance as unknown as GetKudosUseCase)

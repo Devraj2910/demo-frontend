@@ -2,6 +2,7 @@
 
 import React from 'react';
 import UserRequestsSection from './UserRequestsSection';
+import TeamsSection from './TeamsSection';
 
 interface AdminDashboardProps {
   activeSection: string;
@@ -13,12 +14,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeSection }) => {
       case 'requests':
         return <UserRequestsSection />;
       case 'teams':
-        return (
-          <div className='bg-white shadow rounded-lg p-6'>
-            <h2 className='text-lg font-medium leading-6 text-gray-900 mb-4'>Team Management</h2>
-            <p className='text-gray-500'>Team management features coming soon.</p>
-          </div>
-        );
+        return <TeamsSection />;
       case 'analytics':
         return (
           <div className='bg-white shadow rounded-lg p-6'>

@@ -13,7 +13,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, setActiveSectio
   const menuItems = [
     { id: 'requests', name: 'User Requests', icon: UserIcon },
     { id: 'teams', name: 'Team Management', icon: ClipboardDocumentCheckIcon },
-    { id: 'analytics', name: 'Analytics', icon: ChartBarIcon },
     { id: 'settings', name: 'Settings', icon: Cog6ToothIcon },
   ];
 
